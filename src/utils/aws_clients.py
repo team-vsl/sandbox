@@ -3,7 +3,7 @@ import logging
 import boto3
 
 # Import from utils
-from src.utils.constants import DEFAULT_REGION_NAME, DEFAULT_PROFILE_NAME
+from utils.constants import DEFAULT_REGION_NAME, DEFAULT_PROFILE_NAME
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

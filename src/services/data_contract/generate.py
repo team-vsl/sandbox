@@ -5,8 +5,8 @@ import boto3
 from botocore.exceptions import ClientError
 
 # Import from utils
-from src.utils.aws_clients import get_bedrock_client
-from src.utils.bedrock import generate_conversation
+from utils.aws_clients import get_bedrock_client
+from utils.bedrock import generate_conversation
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -37,8 +37,32 @@ Respond with the complete `datacontract.yaml` file only. Do not include explanat
 
 region_name = "ap-southeast-1"
 
+# Import built-in libraries
 
-def generate_draft_datacontract(user_input: str):
+# Import 3rd-party libraries
+
+# Import from utils
+
+
+def generate_draft_datacontract(params):
+    """Generate a draft data contract with GenAI
+
+    Args:
+        params (dict): parameters of this function
+
+    Returns:
+        str: a content of draft data contract
+    """
+    path_params, query, body, headers, meta = (
+        params.get("path_params"),
+        params.get("query"),
+        params.get("body"),
+        params.get("headers"),
+        params.get("meta", {}),
+    )
+
+    user_input = body.get("content")
+
     bedrock_client = get_bedrock_client()
     model_id = "anthropic.claude-3-haiku-20240307-v1:0"
 
@@ -59,12 +83,11 @@ def generate_draft_datacontract(user_input: str):
         output_message = response["output"]["message"]
         messages.append(output_message)
 
+        print(f"Finished generating text with model {model_id}.")
+
         return output_message["content"][0]["text"], messages
 
     except ClientError as err:
         message = err.response["Error"]["Message"]
         logger.error("A client error occurred: %s", message)
         print(f"A client error occured: {message}")
-
-    finally:
-        print(f"Finished generating text with model {model_id}.")

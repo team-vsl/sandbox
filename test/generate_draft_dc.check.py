@@ -3,24 +3,21 @@ import sys
 import os
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(1, os.path.join(BASE_DIR))
-sys.path.insert(0, os.path.join(BASE_DIR, "venv"))
+sys.path.insert(0, os.path.join(BASE_DIR, "src"))
+sys.path.insert(1, os.path.join(BASE_DIR, "venv"))
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
 import logging
-from datetime import datetime
-from pathlib import Path
-import os
 
 # Import from services
-from src.services.data_contract import generate_draft_datacontract
+from services.data_contract import generate_draft_datacontract
 
 # Import from utils
-from src.utils.constants import DATACONTRACT_DIR
-from src.utils.file import write_to_file
+from utils.constants import DATACONTRACT_DIR
+from utils.file import write_to_file
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -36,7 +33,9 @@ def main():
     user_input = input("Enter your question: ")
 
     try:
-        result, messages = generate_draft_datacontract(user_input)
+        result, messages = generate_draft_datacontract(
+            {"body": {"content": user_input}}
+        )
 
         # Show the complete conversation.
         for message in messages:
