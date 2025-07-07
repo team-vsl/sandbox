@@ -1,0 +1,48 @@
+{
+  // Use Prettier for JavaScript files
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.formatOnSave": true
+  },
+  "[terraform]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.tabSize": 2 // optionally
+  },
+  "[terraform-vars]": {
+    "editor.tabSize": 2 // optionally
+  },
+
+  // Enable format on save for all files
+  "editor.formatOnSave": true,
+
+  // Prettier configuration
+  "prettier.singleQuote": false,
+  "prettier.trailingComma": "es5",
+  "prettier.tabWidth": 2,
+  "prettier.semi": true,
+  "prettier.printWidth": 80,
+
+  // Python options
+  "python.analysis.extraPaths": ["./venv/lib/python3.12/site-packages", "./venv/lib64/python3.12/site-packages"],
+
+  // Exclude some files from formatting (optional)
+  "prettier.ignorePath": ".prettierignore"
+}

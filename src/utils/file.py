@@ -16,7 +16,7 @@ def write_to_file(filename: str, content: str, base_dir: str = ".") -> Path:
         Path: Absolute path to the written file.
     """
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    folder = Path(base_dir) / "draft-datacontracts"
+    folder = Path(base_dir)
     folder.mkdir(parents=True, exist_ok=True)
 
     file_path = folder / f"{filename}-{timestamp}.yaml"

@@ -1,3 +1,5 @@
 venv
 draft-datacontracts
 __pycache__
+
+.env

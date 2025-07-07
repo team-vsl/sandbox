@@ -1,25 +1,7 @@
 import logging
-from datetime import datetime
-from pathlib import Path
-import os
-
-import boto3
-
-from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
-
-def get_bedrock_client(profile_name: str = "vsl", region_name: str = "ap-southeat-1"):
-    # Create a session using the named profile 'vsl'
-    session = boto3.Session(profile_name="vsl")
-
-    # Create a Bedrock Runtime client from the session
-    bedrock_client = session.client(
-        service_name="bedrock-runtime", region_name=region_name
-    )  # adjust region as needed
-    return
 
 
 def generate_conversation(bedrock_client, model_id, system_prompts, messages):

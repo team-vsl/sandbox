@@ -5,7 +5,8 @@ import boto3
 from botocore.exceptions import ClientError
 
 # Import from utils
-from utils.bedrock import generate_conversation, get_bedrock_client
+from src.utils.aws_clients import get_bedrock_client
+from src.utils.bedrock import generate_conversation
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
