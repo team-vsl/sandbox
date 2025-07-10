@@ -60,7 +60,7 @@ class ResponseBuilder:
 
         return True
 
-    def setStatusCode(self, statusCode):
+    def set_status_code(self, statusCode):
         """Use to set status code for response
 
         Args:
@@ -70,7 +70,7 @@ class ResponseBuilder:
         ResponseBuilder.checkStatusCodeType(statusCode, {"canThrowError": True})
         self.statusCode = statusCode
 
-    def setData(self, data: int | str | dict):
+    def set_data(self, data: int | str | dict):
         """Use to set data for response
 
         Args:
@@ -142,7 +142,7 @@ class ResponseBuilder:
         """
         return json.dumps({"data": self.data, "meta": self.meta})
 
-    def createErrorResponse(self, error: Exception, statusCode: str | None = None):
+    def create_error_response(self, error: Exception, statusCode: str | None = None):
         """Create an error response
 
         Args:
@@ -162,7 +162,7 @@ class ResponseBuilder:
 
         return {"statusCode": self.statusCode, "headers": self.headers, "body": body}
 
-    def createResponse(self, statusCode: str | None = None):
+    def create_response(self, statusCode: str | None = None):
         """Create a response
 
         Returns:
@@ -171,7 +171,7 @@ class ResponseBuilder:
         if (statusCode is not None) or (
             statusCode is not None and self.statusCode is None
         ):
-            self.setStatusCode(statusCode)
+            self.set_status_code(statusCode)
 
         body = self.createBody()
 
