@@ -22,7 +22,7 @@ async def handler(event, context):
 
         # Return response
         rb.set_status_code(200)
-        rb.set_data({})
+        rb.set_data([])
 
         return rb.create_response()
     except Exps.AppException as error:

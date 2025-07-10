@@ -30,7 +30,6 @@ def get_logger(**kwargs):
         logger_name = "%(levelname)s: %(message)s"
 
     logger = logging.getLogger(logger_name)
-    logging.basicConfig(log_level)
-    logging.basicConfig(format=log_format)
+    logging.basicConfig(level=log_level, format=log_format)
 
     return logger
