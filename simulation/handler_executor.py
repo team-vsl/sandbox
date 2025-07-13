@@ -5,7 +5,7 @@ import json
 import traceback
 import importlib.util
 
-handlers_path = os.path.abspath(os.path.join("..", "src", "runtime", "lambda"))
+handlers_path = os.path.abspath(os.path.join("..", "src", "runtime", "lambda_handlers"))
 
 
 def import_handler(handler_path):
