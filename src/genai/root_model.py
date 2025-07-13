@@ -1,13 +1,7 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Dict
+from typing import Dict
 import models
 
-
-class FieldModel(BaseModel):
-    type: str
-    description: Optional[str] = None
-    primaryKey: Optional[bool] = False
-    
 
 class DataContract(BaseModel):
     id: str = Field(..., description="An organization-wide unique technical identifier, such as a UUID, URN, slug, string, "
