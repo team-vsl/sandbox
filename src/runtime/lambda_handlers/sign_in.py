@@ -29,11 +29,9 @@ async def handler(event, context):
             password=body.get("password"),
         )
 
-        # Transform response
-
         # Return response
         rb.set_status_code(200)
-        rb.set_data({})
+        rb.set_data(response)
 
         return rb.create_response()
     except Exps.AppException as error:

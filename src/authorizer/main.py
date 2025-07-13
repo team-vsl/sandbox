@@ -19,7 +19,32 @@ from utils.cognito import initiate_auth
 jwks_url = f"https://cognito-idp.{DEFAULT_REGION_NAME}.amazonaws.com/{COGNITO_USER_POOL_ID}/.well-known/jwks.json"
 
 
-def get_authorization_token(event: dict) -> str:
+def get_authorization_token_from_headers(headers: dict) -> str:
+    """Lấy token từ header Authorization trong Headers.
+
+    Args:
+        event (dict): lambda event
+
+    Raises:
+        BadRequestException: ném lỗi nếu như không tìm thấy Bearer token
+        BadRequestException: ném lỗi nếu như không tìm thấy nội dung token
+
+    Returns:
+        str: token
+    """
+    auth_header = headers.get("Authorization") or headers.get("authorization")
+
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise BadRequestException("Missing or invalid Authorization header")
+
+    parts = auth_header.split(" ")
+    if len(parts) != 2 or not parts[1]:
+        raise BadRequestException("Bearer token not found")
+
+    return parts[1]
+
+
+def get_authorization_token_from_event(event: dict) -> str:
     """Lấy token từ header Authorization trong sự kiện Lambda.
 
     Args:
@@ -33,16 +58,7 @@ def get_authorization_token(event: dict) -> str:
         str: token
     """
     headers = event.get("headers", {})
-    auth_header = headers.get("Authorization") or headers.get("authorization")
-
-    if not auth_header or not auth_header.startswith("Bearer "):
-        raise BadRequestException("Missing or invalid Authorization header")
-
-    parts = auth_header.split(" ")
-    if len(parts) != 2 or not parts[1]:
-        raise BadRequestException("Bearer token not found")
-
-    return parts[1]
+    return get_authorization_token_from_headers(headers)
 
 
 def get_public_keys():
@@ -119,4 +135,18 @@ def sign_in(**params):
     Returns:
         dict: kết quả của đăng nhập
     """
-    return initiate_auth(**params)
+
+    response = initiate_auth(**params)
+
+    # Transform response
+    auth_result = response.get("AuthenticationResult", {})
+
+    new_response = {
+        "tokenType": auth_result.get("TokenType"),
+        "expiresIn": auth_result.get("ExpiresIn"),
+        "accessToken": auth_result.get("AccessToken"),
+        "refreshToken": auth_result.get("RefreshToken"),
+        "idToken": auth_result.get("IdToken"),
+    }
+
+    return new_response
