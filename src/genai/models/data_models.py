@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, List, Any
-from data_field import DataField, Quality
+from .data_field import DataField, Quality
 
 
 class Config(BaseModel):

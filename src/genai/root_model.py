@@ -10,6 +10,6 @@ class DataContract(BaseModel):
     server: Dict[str, models.Server] = Field(..., description="Specifies the servers of the data contract.")
     terms: models.Terms = Field(..., description="Specifies the terms and conditions of the data contract.")
     data_models: Dict[str, models.Models]
-    definitions: Dict[str, models.Definitions]
+    definitions: Dict[str, models.DefinitionsObject]
     servicelevels: models.ServiceLevels
     tags: Dict[str, str]

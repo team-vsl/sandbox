@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List, Literal, Any, Dict
-from data_field import DataField
+from .data_field import DataField
 
 
 class DefinitionObject(BaseModel):
