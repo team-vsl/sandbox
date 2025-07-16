@@ -30,13 +30,41 @@ from runtime.lambda_handlers import (
     list_rulesets,
     get_ruleset,
     sign_in,
+    get_etl_job,
+    run_job,
+    get_job_run,
+    update_inline_ruleset,
 )
 
 from utils.roles import Roles
 
 load_dotenv()
 
-app = FastAPI()
+tags_metadata = [
+    {
+        "name": "Data Contract",
+        "description": "Các thao tác với data contract",
+    },
+    {
+        "name": "Ruleset",
+        "description": "Các thao tác liên quan tới ruleset",
+    },
+    {
+        "name": "Glue ETL Job",
+        "description": "Các thao tác liên quan tới Glue ETL Job",
+    },
+    {
+        "name": "Auth",
+        "description": "Các thao tác liên quan tới xác thực & uỷ quyền",
+    },
+]
+
+app = FastAPI(
+    title="VP Bank Challenge #23 API Demo - VSL Team",
+    description="Đây là API Demo của Challenge #23 VPBank Hackathon (Smart data contract with genai empowerment)",
+    version="0.0.1",
+    openapi_tags=tags_metadata,
+)
 HOST = os.getenv("HOST")
 PORT = int(os.getenv("PORT"))
 
@@ -50,6 +78,7 @@ def read_root():
 
 @app.get(
     "/teams/{team_id}/data-contracts",
+    tags=["Data Contract"],
     dependencies=[authorization_dependency(Roles.Employee)],
 )
 async def handle_list_datacontracts(team_id: str, q: Union[str, None] = None):
@@ -70,6 +99,7 @@ async def handle_list_datacontracts(team_id: str, q: Union[str, None] = None):
 
 @app.get(
     "/data-contracts/{datacontract_id}",
+    tags=["Data Contract"],
     dependencies=[authorization_dependency(Roles.Employee)],
 )
 async def handle_get_datacontract(datacontract_id: str, q: Union[str, None] = None):
@@ -91,7 +121,9 @@ async def handle_get_datacontract(datacontract_id: str, q: Union[str, None] = No
 
 
 @app.get(
-    "/teams/{team_id}/rulesets", dependencies=[authorization_dependency(Roles.Employee)]
+    "/teams/{team_id}/rulesets",
+    tags=["Ruleset"],
+    dependencies=[authorization_dependency(Roles.Employee)],
 )
 async def handle_list_rulesets(team_id: str, q: Union[str, None] = None):
     # handler_name = "list_rulesets"
@@ -110,7 +142,9 @@ async def handle_list_rulesets(team_id: str, q: Union[str, None] = None):
 
 
 @app.get(
-    "/rulesets/{ruleset_id}", dependencies=[authorization_dependency(Roles.Employee)]
+    "/rulesets/{ruleset_id}",
+    tags=["Ruleset"],
+    dependencies=[authorization_dependency(Roles.Employee)],
 )
 async def handle_get_ruleset(ruleset_id: str, q: Union[str, None] = None):
     # handler_name = "get_ruleset"
@@ -128,17 +162,99 @@ async def handle_get_ruleset(ruleset_id: str, q: Union[str, None] = None):
     return json_response(response)
 
 
-@app.post("/auth/sign-in")
-async def handle_sign_in(request: Request):
+@app.post(
+    "/auth/sign-in",
+    tags=["Auth"],
+)
+async def handle_sign_in(body: dict):
     # handler_name = "get_ruleset"
 
     # response = await execute_handler(
     #     handler_name, create_lambda_event(params={"ruleset_id": ruleset_id}), {}
     # )
 
-    body = await request.json()
-
     response = await sign_in.handler(create_lambda_event(data=body), {})
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
+@app.get(
+    "/glue-jobs/{job_name}",
+    tags=["Glue ETL Job"],
+)
+async def handle_get_glue_job(job_name: str):
+    # handler_name = "get_ruleset"
+
+    # response = await execute_handler(
+    #     handler_name, create_lambda_event(params={"ruleset_id": ruleset_id}), {}
+    # )
+
+    response = await get_etl_job.handler(
+        create_lambda_event(params={"job_name": job_name}), {}
+    )
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
+@app.post(
+    "/glue-jobs/{job_name}",
+    tags=["Glue ETL Job"],
+)
+async def handle_start_run_glue_job(job_name: str, body: dict | None = None):
+    # handler_name = "get_ruleset"
+
+    # response = await execute_handler(
+    #     handler_name, create_lambda_event(params={"ruleset_id": ruleset_id}), {}
+    # )
+
+    response = await run_job.handler(
+        create_lambda_event(params={"job_name": job_name}, data=body), {}
+    )
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
+@app.patch(
+    "/glue-jobs/{job_name}",
+    tags=["Glue ETL Job"],
+)
+async def handle_update_inline_ruleset_in_job(job_name: str, body: dict):
+    # handler_name = "get_ruleset"
+
+    # response = await execute_handler(
+    #     handler_name, create_lambda_event(params={"ruleset_id": ruleset_id}), {}
+    # )
+
+    response = await update_inline_ruleset.handler(
+        create_lambda_event(params={"job_name": job_name}, data=body), {}
+    )
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
+@app.get(
+    "/glue-jobs/{job_name}/run-status/{job_run_id}",
+    tags=["Glue ETL Job"],
+)
+async def handle_get_job_run(job_name: str, job_run_id: str):
+    # handler_name = "get_ruleset"
+
+    # response = await execute_handler(
+    #     handler_name, create_lambda_event(params={"ruleset_id": ruleset_id}), {}
+    # )
+
+    response = await get_job_run.handler(
+        create_lambda_event(params={"job_name": job_name, "job_run_id": job_run_id}),
+        {},
+    )
 
     response["body"] = json.loads(response["body"])
 
