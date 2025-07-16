@@ -36,7 +36,7 @@ DefinitionObject = {
     "links": Optional[Dict[str, str]],  # Documentation links
     "fields": Optional[Dict[str, DataField]]  # Nested fields (type="object" only)
 }
-
+```
 Example (no extra text):
 
 "order_id":
