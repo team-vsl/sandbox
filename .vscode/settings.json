@@ -41,7 +41,11 @@
   "prettier.printWidth": 80,
 
   // Python options
-  "python.analysis.extraPaths": ["./venv/lib/python3.12/site-packages", "./venv/lib64/python3.12/site-packages"],
+  "python.analysis.extraPaths": [
+    "./venv/lib/python3.12/site-packages",
+    "./venv/lib64/python3.12/site-packages",
+    "./simulation/packages"
+  ],
 
   // Exclude some files from formatting (optional)
   "prettier.ignorePath": ".prettierignore"

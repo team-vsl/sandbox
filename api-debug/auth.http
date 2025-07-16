@@ -1,0 +1,23 @@
+@base_url = {{$dotenv PROTOCOL}}://{{$dotenv HOST_NAME}}:{{$dotenv PORT}}
+
+@username = {{$dotenv TEST_USER_USERNAME}}
+@password = {{$dotenv TEST_USER_PASSWORD}}
+
+### Send request to sign in
+
+curl -X POST {{base_url}}/auth/sign-in \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "username": "{{username}}",
+    "password": "{{password}}"
+  }'
+
+
+### Test - Call GET /data-contracts/:datacontract_id with token
+# @prompt access_token
+curl {{base_url}}/data-contracts/my-draft-datacontract \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer {{access_token}}'
+
+### Test - Call GET /data-contracts/:datacontract_id without token (Return error)
+curl {{base_url}}/data-contracts/my-draft-datacontract

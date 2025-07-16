@@ -30,3 +30,7 @@ def get_bedrock_client():
 
 def get_s3_client():
     return get_client("s3")
+
+
+def get_cogito_client():
+    return get_client("cognito-idp")
