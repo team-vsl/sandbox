@@ -6,6 +6,7 @@ from botocore.client import BaseClient
 
 # Import helpers
 from utils.helpers import string as string_helpers
+from utils.aws_clients import get_s3_client 
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -14,13 +15,13 @@ logging.basicConfig(level=logging.INFO)
 def upload_file(**params: dict):
     """Upload file to s3 bucket"""
     s3_client = params.get("s3_client")
+    
+    if s3_client is None:
+        s3_client = get_s3_client()  # Tự tạo client nếu chưa có
     file_name = params.get("file_name")
     bucket_name = params.get("bucket_name")
     object_name = params.get("object_name")
     metadata = params.get("metadata", {})
-
-    if s3_client is None:
-        raise Exception("S3 Client is required")
 
     if string_helpers.is_empty(file_name):
         raise Exception("Name of file is required")
