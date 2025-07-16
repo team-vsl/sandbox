@@ -13,7 +13,7 @@ class TermsAgentState(TypedDict):
     data: Union[Terms, None]
 
 
-class TermsInfo(BaseModel):
+class TermsField(BaseModel):
     info: Terms
 
 
@@ -37,7 +37,7 @@ class TermsAgent:
             return state
         
         messages = [SystemMessage(content=sys_prompt), human_request]
-        parser = JsonOutputParser(pydantic_object=TermsInfo)
+        parser = JsonOutputParser(pydantic_object=TermsField)
         response = self._llm.invoke(messages)
         state["data"] = parser.parse(response.content)
         return state

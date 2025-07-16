@@ -7,7 +7,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.output_parsers import JsonOutputParser
 
 
-class FieldDefinitions(BaseModel):
+class DefinitionsField(BaseModel):
     definitions: Dict[str, DefinitionObject]
 
 
@@ -22,7 +22,7 @@ class DefinitionsAgent(BaseSubAgent):
     
     def create_object_node(self, state: SubState):
         system_prompt = self._system_prompt.get("create_object")
-        parser = JsonOutputParser(pydantic_object=FieldDefinitions)
+        parser = JsonOutputParser(pydantic_object=DefinitionsField)
 
         human_request = state.get("messages")[-1]
 

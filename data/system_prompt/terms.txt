@@ -12,7 +12,7 @@ Instructions:
 - Use only the input data provided by the user.
 - If a required field is missing, set its value to null. Do not guess or fabricate values.
 - Only infer values for fields marked ALLOW-GEN.
-- Do NOT respond to requests unrelated to Redshift (e.g., SLA checks, quality testing). Instead, return a valid minimal info object with null values where needed.
+- Do NOT respond to requests unrelated to Terms (e.g., SLA checks, quality testing). Instead, return a valid minimal terms object with null values where needed.
 - Output only a valid JSON object. Do not include markdown, code blocks, explanation, comments, or extra formatting.
 
 Schema:

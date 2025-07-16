@@ -18,11 +18,11 @@ class ServerAgentState(TypedDict):
     sys_prompt: Dict
 
 
-class FieldRedShiftServer(BaseModel):
+class RedShiftServerField(BaseModel):
     server: Dict[str, RedshiftServer]
 
 
-class FieldS3Server(BaseModel):
+class S3ServerField(BaseModel):
     server: Dict[str, S3Server]
 
 
@@ -106,7 +106,7 @@ Output: s3, redshift
 
     def generate_object_node(self, state: ServerAgentState) -> ServerAgentState:
         
-        object_dict = {"redshift": FieldRedShiftServer, "s3": FieldS3Server}
+        object_dict = {"redshift": RedShiftServerField, "s3": S3ServerField}
         sys_prompt_list = state.get("sys_prompt")
 
         human_request = state.get("messages")[-1]
