@@ -34,3 +34,7 @@ def get_s3_client():
 
 def get_cogito_client():
     return get_client("cognito-idp")
+
+
+def get_glue_client():
+    return get_client("glue")
