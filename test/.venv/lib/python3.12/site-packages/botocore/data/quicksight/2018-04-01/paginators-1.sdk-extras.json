@@ -191,24 +191,6 @@
           "Status",
           "RequestId"
         ]
-      },
-      "ListFoldersForResource": {
-        "non_aggregate_keys": [
-          "Status",
-          "RequestId"
-        ]
-      },
-      "ListCustomPermissions": {
-        "non_aggregate_keys": [
-          "Status",
-          "RequestId"
-        ]
-      },
-      "SearchTopics": {
-        "non_aggregate_keys": [
-          "Status",
-          "RequestId"
-        ]
       }
     }
   }
