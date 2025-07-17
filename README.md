@@ -1,41 +1,42 @@
+
 # VP Bank Hackathon - Challenge 23 Solution
 
-Mã nguồn giải pháp cho Challenge 23.
+Source code for Challenge 23 solution.
 
 ## Collaborators
 
-Update later...
+To be updated later...
 
 ## Requirements
 
-Khi phát triển thì yêu cầu một số điều kiện sau:
+During development, the following conditions are required:
 
-1. Phát triển trên môi trường Linux.
-2. Cài AWS CLI.
-3. Cài Python (>3.1x).
+1. Development environment: Linux.
+2. AWS CLI must be installed.
+3. Python (>3.1x) must be installed.
 
-## How to setup ?
+## How to set up?
 
-Hướng dẫn thiết lập một số thứ
+Instructions for setting things up:
 
 ### AWS CLI
 
-1. Đăng nhập vào trong IAM User đã được đưa và tạo Access Key và Secret Key.
-2. Sau đó là setup profile trong AWS CLI (Nhớ cài AWS CLI).
+1. Log in to the IAM User provided and create an Access Key and Secret Key.
+2. Then, configure the AWS CLI profile (make sure AWS CLI is installed).
 
 ```bash
 aws configure --profile vsl
 ```
 
-Sau đó là lần lượt thêm Access Key ID, Access Secret Key, Region = `ap-southeast-1`, Output = `json`.
+Then enter the Access Key ID, Secret Access Key, Region = `ap-southeast-1`, and Output = `json`.
 
 ### Setup environment file
 
-1. Vào trong thư mục dự án, tạo file `.env`
-2. Copy toàn bộ nội dung của `.env.example` sang `.env`.
-3. Điền những thông tin còn thiếu là xong.
+1. In the project directory, create a `.env` file.
+2. Copy all contents from `.env.example` to `.env`.
+3. Fill in the missing information.
 
-Hoặc là dùng lệnh này để làm nhanh các bước trên:
+Or run this command to do it quickly:
 
 ```bash
 cat .env.example > .env
@@ -43,13 +44,13 @@ cat .env.example > .env
 
 ### Create DataContract Temporary Directory
 
-1. Ở home của user, tạo một thư mục theo đường dẫn sau.
+1. In the user's home, create the following directory:
 
 ```bash
 sudo mkdir -p /var/vpbank/datacontracts
 ```
 
-2. Sau đó thì thêm toàn quyền cho folder này.
+2. Then give full permissions to this folder:
 
 ```bash
 sudo chmod -R 777 /var/vpbank/datacontracts
@@ -57,18 +58,20 @@ sudo chmod -R 777 /var/vpbank/datacontracts
 
 ### Project
 
-1. Đầu tiên là phải tải >= python3, pip3.
-2. Tải thêm thư viện python3-venv.
-3. Tạo môi trường ảo cho dự án.
+1. First, install Python 3 and pip3 (version >= 3).
+2. Install the `python3-venv` library.
+3. Create a virtual environment for the project:
 
 ```bash
 python3 -m venv venv
 ```
 
-4. Cài packages
+4. Install required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-5. Xong
+5. Done.
+
+---
