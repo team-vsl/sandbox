@@ -18,22 +18,22 @@ def test_approve_ruleset(ruleset_id):
     try:
         success = approve_ruleset(ruleset_id)
         if success:
-            logger.info(f"✅ Approved ruleset {ruleset_id} successfully.")
+            logger.info(f" Approved ruleset {ruleset_id} successfully.")
         else:
-            logger.error(f"❌ Failed to approve ruleset {ruleset_id}.")
+            logger.error(f"Failed to approve ruleset {ruleset_id}.")
     except Exception as e:
-        logger.error(f"🔥 Error approving ruleset: {e}")
+        logger.error(f"Error approving ruleset: {e}")
 
 def test_reject_ruleset(ruleset_id):
     logger.info(f"Test reject ruleset: {ruleset_id}")
     try:
         success = reject_ruleset(ruleset_id)
         if success:
-            logger.info(f"✅ Rejected ruleset {ruleset_id} successfully.")
+            logger.info(f"Rejected ruleset {ruleset_id} successfully.")
         else:
-            logger.error(f"❌ Failed to reject ruleset {ruleset_id}.")
+            logger.error(f"Failed to reject ruleset {ruleset_id}.")
     except Exception as e:
-        logger.error(f"🔥 Error rejecting ruleset: {e}")
+        logger.error(f"Error rejecting ruleset: {e}")
 
 def test_list_rulesets():
     logger.info("Test list rulesets for all statuses")
@@ -43,7 +43,7 @@ def test_list_rulesets():
             rulesets = list_rulesets(status=status)
             logger.info(f"{status.capitalize()} rulesets: {rulesets}")
         except Exception as e:
-            logger.error(f"🔥 Error listing {status} rulesets: {e}")
+            logger.error(f"Error listing {status} rulesets: {e}")
 
 if __name__ == "__main__":
     RULESET_ID = "test_ruleset_1"

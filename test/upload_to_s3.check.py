@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 async def main():
-    logger.info("🚀 Bắt đầu upload file lên S3...")
+    logger.info(" Bắt đầu upload file lên S3...")
 
     file_name = "hello.txt"
     folder_in_s3 = "pending"
@@ -36,14 +36,14 @@ async def main():
 
     # Kiểm tra file tồn tại
     if not file_path.exists():
-        logger.error(f"❌ File không tồn tại: {file_path}")
+        logger.error(f" File không tồn tại: {file_path}")
         return
 
     # Lấy S3 client
     s3_client = get_s3_client()
 
     try:
-        logger.info(f"📤 Upload: {file_path} → bucket: {bucket_name} → object: {object_name}")
+        logger.info(f" Upload: {file_path} → bucket: {bucket_name} → object: {object_name}")
 
         upload_file(
             s3_client=s3_client,
@@ -55,10 +55,10 @@ async def main():
 
         region = s3_client.meta.region_name
         url = f"https://{bucket_name}.s3.{region}.amazonaws.com/{object_name}"
-        logger.info(f"✅ File đã upload thành công: {url}")
+        logger.info(f" File đã upload thành công: {url}")
 
     except Exception as err:
-        logger.error(f"🔥 Lỗi khi upload file: {str(err)}")
+        logger.error(f" Lỗi khi upload file: {str(err)}")
 
 
 if __name__ == "__main__":
