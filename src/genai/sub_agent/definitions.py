@@ -39,7 +39,12 @@ class DefinitionsAgent:
         messages = [SystemMessage(content=sys_prompt), human_request]
         parser = JsonOutputParser(pydantic_object=DefinitionField)
         response = self._llm.invoke(messages)
-        state["data"] = parser.parse(response.content)
+
+        try:
+            state["data"] = parser.parse(response.content)
+        except Exception as e:
+            print(f"Error parsing response: {e}")
+            state["data"] = {}
         return state
 
     def _create_graph(self):
