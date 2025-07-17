@@ -16,11 +16,11 @@ load_dotenv(dotenv_path=str(BASE_DIR / ".env"))
 STATUS = "pending"  # hoặc approved/rejected
 
 try:
-    logger.info(f"🔍 Listing rulesets with status: {STATUS}")
+    logger.info(f" Listing rulesets with status: {STATUS}")
     rulesets = list_rulesets(status=STATUS)
     if rulesets:
         logger.info(f"Found rulesets: {rulesets}")
     else:
         logger.warning("⚠️ No rulesets found.")
 except Exception as e:
-    logger.error(f"🔥 Lỗi khi list rulesets: {e}")
+    logger.error(f" Lỗi khi list rulesets: {e}")

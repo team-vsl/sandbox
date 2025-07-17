@@ -25,11 +25,11 @@ try:
         content = json.load(f)
         ruleset_id = content.get("ruleset_id")
         if not ruleset_id:
-            raise ValueError("❌ File JSON thiếu trường 'ruleset_id'")
+            raise ValueError(" File JSON thiếu trường 'ruleset_id'")
         
-        logger.info(f"📤 Uploading ruleset: {ruleset_id}")
+        logger.info(f" Uploading ruleset: {ruleset_id}")
         upload_ruleset(ruleset_id, content)
-        logger.info("✅ Upload thành công!")
+        logger.info(" Upload thành công!")
 
 except Exception as e:
-    logger.error(f"🔥 Upload thất bại: {e}")
+    logger.error(f" Upload thất bại: {e}")
