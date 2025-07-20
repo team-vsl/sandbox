@@ -1,4 +1,4 @@
-venv
+**/venv
 draft-datacontracts
 __pycache__
 
