@@ -5,9 +5,24 @@ from utils.constants import (
     DEFAULT_REGION_NAME,
 )
 from utils.exceptions import BadRequestException
-from utils.aws_clients import get_cogito_client
+from utils.aws_clients import get_cognito_client
 from utils.helpers.other import extract_kwargs
 from utils.helpers.string import is_empty
+
+
+def get_user(**params):
+    cognito_client = get_cognito_client()
+    tpl = extract_kwargs(params, "username")
+    username = tpl[0]
+
+    if is_empty(username):
+        raise BadRequestException("Username is required to get user's information")
+
+    response = cognito_client.admin_get_user(
+        UserPoolId=COGNITO_USER_POOL_ID, Username=username
+    )
+
+    return response
 
 
 def initiate_auth(**params):
@@ -20,14 +35,14 @@ def initiate_auth(**params):
     Returns:
         dict: kết quả của initiate_auth
     """
-    cogito_client = get_cogito_client()
+    cognito_client = get_cognito_client()
     username, email, password = extract_kwargs(params, "username", "email", "password")
 
     if is_empty(password):
-        raise BadRequestException("Password is required")
+        raise BadRequestException("Password is required to sign in")
 
     if is_empty(username) and is_empty(email):
-        raise BadRequestException("Username or Email is required")
+        raise BadRequestException("Username or Email is required to sign in")
 
     auth_parameters = {"PASSWORD": password}
 
@@ -36,7 +51,7 @@ def initiate_auth(**params):
     else:
         auth_parameters["USERNAME"] = username
 
-    response = cogito_client.initiate_auth(
+    response = cognito_client.initiate_auth(
         AuthFlow="USER_PASSWORD_AUTH",
         ClientId=COGNITO_APP_CLIENT_ID,
         AuthParameters=auth_parameters,

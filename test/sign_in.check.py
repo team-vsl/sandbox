@@ -14,10 +14,10 @@ load_dotenv()
 from authorizer import sign_in
 
 
-def main():
-    username = "anhtuan1912"
+async def main():
+    username = input("Enter your username: ")
     password = input("Enter your password: ")
-    response = sign_in(username=username, password=password)
+    response = await sign_in(username=username, password=password)
 
     print("Initiate Response:", response)
 
@@ -25,4 +25,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

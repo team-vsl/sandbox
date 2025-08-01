@@ -1,5 +1,6 @@
 # Import built-in libraries
 import os
+import asyncio
 
 # Import external libraries
 import requests
@@ -14,7 +15,8 @@ from utils.constants import (
     DEFAULT_REGION_NAME,
 )
 from utils.exceptions import BadRequestException
-from utils.cognito import initiate_auth
+from utils.cognito import initiate_auth, get_user
+from utils.helpers.other import to_camel_case
 
 jwks_url = f"https://cognito-idp.{DEFAULT_REGION_NAME}.amazonaws.com/{COGNITO_USER_POOL_ID}/.well-known/jwks.json"
 
@@ -123,30 +125,50 @@ def verify_token(token):
         }
 
     except (InvalidTokenError, ValueError) as e:
-        print("❌ Token verification failed:", str(e))
+        print("Token verification failed:", str(e))
         return {
             "isAuthorized": False,
         }
 
 
-def sign_in(**params):
+async def sign_in(**params):
     """Đăng nhập một người dùng vào trong hệ thống với cognito
 
     Returns:
         dict: kết quả của đăng nhập
     """
 
-    response = initiate_auth(**params)
+    tasks = [
+        asyncio.to_thread(initiate_auth, **params),
+        asyncio.to_thread(get_user, **params),
+    ]
+    responses = await asyncio.gather(*tasks)
+
+    auth_response = responses[0]
+    get_user_response = responses[1]
 
     # Transform response
-    auth_result = response.get("AuthenticationResult", {})
+    auth_result = auth_response.get("AuthenticationResult", {})
+    user_attributes = get_user_response.get("UserAttributes", {})
+    uattrdict = {}
+
+    for attr in user_attributes:
+        attr_name = attr.get("Name", "")
+
+        if attr_name.startswith("custom"):
+            attr_name = attr_name.split(":")[1]
+
+        uattrdict[to_camel_case(attr_name)] = attr.get("Value")
 
     new_response = {
-        "tokenType": auth_result.get("TokenType"),
-        "expiresIn": auth_result.get("ExpiresIn"),
-        "accessToken": auth_result.get("AccessToken"),
-        "refreshToken": auth_result.get("RefreshToken"),
-        "idToken": auth_result.get("IdToken"),
+        "auth": {
+            "tokenType": auth_result.get("TokenType"),
+            "expiresIn": auth_result.get("ExpiresIn"),
+            "accessToken": auth_result.get("AccessToken"),
+            "refreshToken": auth_result.get("RefreshToken"),
+            "idToken": auth_result.get("IdToken"),
+        },
+        "user": uattrdict,
     }
 
     return new_response
