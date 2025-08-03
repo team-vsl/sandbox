@@ -3,12 +3,14 @@ import traceback, os
 
 # Import 3rd-party libraries
 
+# Import from authorizer
+from authorizer import refresh_tokens
+
 # Import utils
 import utils.exceptions as Exps
 from utils.helpers import request as request_helpers
 from utils.logger import get_logger
 from utils.response_builder import ResponseBuilder
-
 
 async def handler(event, context):
     rb = ResponseBuilder()
@@ -19,28 +21,30 @@ async def handler(event, context):
         claims = request_helpers.get_claims_from_event(event)
         pathParams = request_helpers.get_path_params_from_event(event)
         body = request_helpers.get_body_from_event(event)
+        
+        refresh_token = body.get("refreshToken")
+        
+        response = refresh_tokens(refresh_token=refresh_token)
 
         # Return response
         rb.set_status_code(200)
-        rb.set_data({})
+        rb.set_data(response)
 
         return rb.create_response()
     except Exps.AppException as error:
-        logger.error(f"Error | [generate_ruleset]: {error}")
-        return rb.create_error_response(error)
+       logger.error(f"Error | [refresh_token]: {error}")
+       return rb.create_error_response(error)
     except Exps.InternalException as error:
         error.message = (
             "There is an internal error in server Contact with Admin to get support."
         )
-        logger.error(f"Error | [generate_ruleset]: {error}")
+        logger.error(f"Error | [refresh_token]: {error}")
         return rb.create_error_response(error)
     except Exception as error:
-        logger.error(
-            f"Uknown error | [generate_ruleset]: {error} {traceback.format_exc()}"
-        )
+        logger.error(f"Uknown error | [refresh_token]: {error} {traceback.format_exc()}")
         error.message = (
             "There is an internal error in server Contact with Admin to get support."
         )
         return rb.create_error_response(Exps.UnknownException(str(error)))
     finally:
-        logger.debug("End execution of [generate_ruleset]")
+        logger.debug("End execution of [refresh_token]")

@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.join(BASE_DIR, "..", "src"))
 
 # Import external packages
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 # Import helper
@@ -30,6 +31,7 @@ from runtime.lambda_handlers import (
     list_rulesets,
     get_ruleset,
     sign_in,
+    refresh_tokens,
     get_etl_job,
     run_job,
     get_job_run,
@@ -68,12 +70,57 @@ app = FastAPI(
 HOST = os.getenv("HOST")
 PORT = int(os.getenv("PORT"))
 
+origins = ["http://localhost:5173"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/")
 def read_root():
     return {
         "message": "Hello World !!! This is a lambda simulation of VP Bank Hackathon Challenge 23 from VSL Team"
     }
+
+
+@app.post(
+    "/auth/sign-in",
+    tags=["Auth"],
+)
+async def handle_sign_in(body: dict):
+    # handler_name = "get_ruleset"
+
+    # response = await execute_handler(
+    #     handler_name, create_lambda_event(params={"ruleset_id": ruleset_id}), {}
+    # )
+
+    response = await sign_in.handler(create_lambda_event(data=body), {})
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
+@app.post(
+    "/auth/refresh-tokens",
+    tags=["Auth"],
+)
+async def handle_refresh_token(body: dict):
+    # handler_name = "get_ruleset"
+
+    # response = await execute_handler(
+    #     handler_name, create_lambda_event(params={"ruleset_id": ruleset_id}), {}
+    # )
+
+    response = await refresh_tokens.handler(create_lambda_event(data=body), {})
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
 
 
 @app.get(
@@ -156,24 +203,6 @@ async def handle_get_ruleset(ruleset_id: str, q: Union[str, None] = None):
     response = await get_ruleset.handler(
         create_lambda_event(params={"ruleset_id": ruleset_id}), {}
     )
-
-    response["body"] = json.loads(response["body"])
-
-    return json_response(response)
-
-
-@app.post(
-    "/auth/sign-in",
-    tags=["Auth"],
-)
-async def handle_sign_in(body: dict):
-    # handler_name = "get_ruleset"
-
-    # response = await execute_handler(
-    #     handler_name, create_lambda_event(params={"ruleset_id": ruleset_id}), {}
-    # )
-
-    response = await sign_in.handler(create_lambda_event(data=body), {})
 
     response["body"] = json.loads(response["body"])
 

@@ -1,0 +1,36 @@
+{
+  "ruleset_id": "test_ruleset_1",
+  "name": "Validate Customer Profile",
+  "description": "Ensure all customer profile fields meet schema and business rules.",
+  "version": "1.0.0",
+  "status": "pending",
+  "created_by": "ThaiAnhDuc02",
+  "created_at": "2025-07-16T10:00:00Z",
+  "rules": [
+    {
+      "field": "customer_id",
+      "type": "string",
+      "required": true,
+      "pattern": "^[A-Z0-9]{8}$"
+    },
+    {
+      "field": "email",
+      "type": "string",
+      "required": true,
+      "format": "email"
+    },
+    {
+      "field": "birthdate",
+      "type": "date",
+      "required": true,
+      "min": "1900-01-01",
+      "max": "2025-01-01"
+    },
+    {
+      "field": "balance",
+      "type": "number",
+      "min": 0,
+      "max": 1000000000
+    }
+  ]
+}

@@ -26,19 +26,17 @@ async def handler(event, context):
 
         return rb.create_response()
     except Exps.AppException as error:
-        logger.error("Error | [approve_draft_datacontract]:", error)
+        logger.error(f"Error | [approve_draft_datacontract]: {error}")
         return rb.create_error_response(error)
     except Exps.InternalException as error:
         error.message = (
             "There is an internal error in server Contact with Admin to get support."
         )
-        logger.error("Error | [approve_draft_datacontract]:", error)
+        logger.error(f"Error | [approve_draft_datacontract]: {error}")
         return rb.create_error_response(error)
     except Exception as error:
         logger.error(
-            "Uknown error | [approve_draft_datacontract]:",
-            error,
-            traceback.format_exc(),
+            f"Uknown error | [approve_draft_datacontract]: {error} {traceback.format_exc()}"
         )
         error.message = (
             "There is an internal error in server Contact with Admin to get support."
