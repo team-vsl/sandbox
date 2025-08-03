@@ -11,6 +11,14 @@ from utils.helpers.string import is_empty
 
 
 def get_user(**params):
+    """Gửi yêu cầu tới Cognito để lấy thông tin của người dùng
+
+    Raises:
+        BadRequestException: ném lỗi nếu như không có username
+
+    Returns:
+        dict: phản hồi từ cognito
+    """
     cognito_client = get_cognito_client()
     tpl = extract_kwargs(params, "username")
     username = tpl[0]
@@ -24,6 +32,26 @@ def get_user(**params):
 
     return response
 
+def get_tokens_from_refresh_token(**params):
+    """Gửi yêu cầu tới Cognito để làm mới lại Access và Id token
+
+    Returns:
+        dict: phản hồi từ cognito
+    """
+    cognito_client = get_cognito_client()
+    r = extract_kwargs(params, "refresh_token")
+    
+    refresh_token = r[0]
+    
+    if is_empty(refresh_token):
+        raise BadRequestException("Refresh token is required to get new access, id token")
+    
+    response = cognito_client.get_tokens_from_refresh_token(
+        RefreshToken=refresh_token, 
+        ClientId=COGNITO_APP_CLIENT_ID
+    )
+    
+    return response
 
 def initiate_auth(**params):
     """Gửi yêu cầu để đăng nhập (xác thực) một người dùng trong user pool

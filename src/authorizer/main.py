@@ -3,6 +3,7 @@ import os
 import asyncio
 
 # Import external libraries
+from botocore.exceptions import ClientError
 import requests
 import jwt
 from jwt import InvalidTokenError
@@ -14,9 +15,13 @@ from utils.constants import (
     COGNITO_USER_POOL_ID,
     DEFAULT_REGION_NAME,
 )
-from utils.exceptions import BadRequestException
-from utils.cognito import initiate_auth, get_user
-from utils.helpers.other import to_camel_case
+from utils.exceptions import (
+    BadRequestException,
+    InternalException,
+    UnauthorizedException,
+)
+from utils.cognito import initiate_auth, get_user, get_tokens_from_refresh_token
+from utils.helpers.other import to_camel_case, extract_kwargs
 
 jwks_url = f"https://cognito-idp.{DEFAULT_REGION_NAME}.amazonaws.com/{COGNITO_USER_POOL_ID}/.well-known/jwks.json"
 
@@ -69,6 +74,7 @@ def get_public_keys():
     Returns:
         list[dict]: một list các thông tin jwk từ Cognito Pool
     """
+    print("JWKs URL:", jwks_url)
     response = requests.get(jwks_url)
     response.raise_for_status()
     data = response.json()
@@ -131,44 +137,90 @@ def verify_token(token):
         }
 
 
+def sign_in_with_id_token(**params):
+    try:
+        r = extract_kwargs(params, "id_token")
+        id_token = r[0]
+
+        # Verify token
+        result = verify_token(id_token)
+
+        if not result["isAuthorized"]:
+            raise UnauthorizedException("ID Token is invalid")
+
+        # Get user's information
+        user = get_user(username=result["claims"]["username"])
+
+        return {"user": user}
+
+    except ClientError as e:
+        raise InternalException(
+            e.response["Error"]["Message"], title=e.response["Error"]["Code"]
+        )
+
+def refresh_tokens(**params):
+    try:
+        response = get_tokens_from_refresh_token(**params)
+        
+        auth_result = response.get("AuthenticationResult", {})
+        
+        new_response = {
+            "auth": {
+                "tokenType": auth_result.get("TokenType"),
+                "expiresIn": auth_result.get("ExpiresIn"),
+                "accessToken": auth_result.get("AccessToken"),
+                "idToken": auth_result.get("IdToken"),
+            }
+        }
+        
+        return new_response
+    except ClientError as e:
+        raise InternalException(
+            e.response["Error"]["Message"], title=e.response["Error"]["Code"]
+        )
+
 async def sign_in(**params):
     """Đăng nhập một người dùng vào trong hệ thống với cognito
 
     Returns:
         dict: kết quả của đăng nhập
     """
+    try:
+        # tasks = [
+        #     asyncio.to_thread(initiate_auth, **params),
+        #     asyncio.to_thread(get_user, **params),
+        # ]
+        # responses = await asyncio.gather(*tasks)
 
-    tasks = [
-        asyncio.to_thread(initiate_auth, **params),
-        asyncio.to_thread(get_user, **params),
-    ]
-    responses = await asyncio.gather(*tasks)
+        auth_response = initiate_auth(**params)
+        # get_user_response = responses[1]
 
-    auth_response = responses[0]
-    get_user_response = responses[1]
+        # Transform response
+        auth_result = auth_response.get("AuthenticationResult", {})
+        # user_attributes = get_user_response.get("UserAttributes", {})
+        # uattrdict = {}
 
-    # Transform response
-    auth_result = auth_response.get("AuthenticationResult", {})
-    user_attributes = get_user_response.get("UserAttributes", {})
-    uattrdict = {}
+        # for attr in user_attributes:
+        #     attr_name = attr.get("Name", "")
 
-    for attr in user_attributes:
-        attr_name = attr.get("Name", "")
+        #     if attr_name.startswith("custom"):
+        #         attr_name = attr_name.split(":")[1]
 
-        if attr_name.startswith("custom"):
-            attr_name = attr_name.split(":")[1]
+        #     uattrdict[to_camel_case(attr_name)] = attr.get("Value")
 
-        uattrdict[to_camel_case(attr_name)] = attr.get("Value")
+        new_response = {
+            "auth": {
+                "tokenType": auth_result.get("TokenType"),
+                "expiresIn": auth_result.get("ExpiresIn"),
+                "accessToken": auth_result.get("AccessToken"),
+                "refreshToken": auth_result.get("RefreshToken"),
+                "idToken": auth_result.get("IdToken"),
+            },
+            # "user": uattrdict,
+        }
 
-    new_response = {
-        "auth": {
-            "tokenType": auth_result.get("TokenType"),
-            "expiresIn": auth_result.get("ExpiresIn"),
-            "accessToken": auth_result.get("AccessToken"),
-            "refreshToken": auth_result.get("RefreshToken"),
-            "idToken": auth_result.get("IdToken"),
-        },
-        "user": uattrdict,
-    }
-
-    return new_response
+        return new_response
+    except ClientError as e:
+        raise InternalException(
+            e.response["Error"]["Message"], title=e.response["Error"]["Code"]
+        )

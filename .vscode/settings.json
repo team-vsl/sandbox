@@ -19,7 +19,7 @@
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
-    "editor.formatOnSave": true
+    "editor.formatOnSave": false
   },
   "[terraform]": {
     "editor.formatOnSave": true,

@@ -1,5 +1,5 @@
 # Import built-in libraries
-import traceback, os
+import traceback
 
 # Import 3rd-party libraries
 
@@ -33,16 +33,16 @@ async def handler(event, context):
 
         return rb.create_response()
     except Exps.AppException as error:
-        logger.error("Error | [get_job_run]:", error)
+        logger.error(f"Error | [get_job_run]: {error}")
         return rb.create_error_response(error)
     except Exps.InternalException as error:
         error.message = (
             "There is an internal error in server Contact with Admin to get support."
         )
-        logger.error("Error | [get_job_run]:", error)
+        logger.error(f"Error | [get_job_run]: {error}")
         return rb.create_error_response(error)
     except Exception as error:
-        logger.error("Uknown error | [get_job_run]:", error, traceback.format_exc())
+        logger.error(f"Uknown error | [get_job_run]: {error} {traceback.format_exc()}")
         error.message = (
             "There is an internal error in server Contact with Admin to get support."
         )

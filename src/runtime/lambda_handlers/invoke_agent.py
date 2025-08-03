@@ -7,11 +7,17 @@ from utils.response_builder import ResponseBuilder
 # Import DataModelAgent
 from genai.sub_agent.data_model import DataModelAgent
 
+
 # Mock LLM instance (bạn cần thay thế bằng LLM thực tế khi triển khai)
 class DummyLLM:
     def invoke(self, messages):
         # Trả về kết quả mẫu để test flow
-        return type('obj', (object,), {"content": '{"type": "table", "description": "Sample", "fields": {}}'})()
+        return type(
+            "obj",
+            (object,),
+            {"content": '{"type": "table", "description": "Sample", "fields": {}}'},
+        )()
+
 
 async def handler(event, context):
     rb = ResponseBuilder()
@@ -29,18 +35,19 @@ async def handler(event, context):
         rb.set_data(result)
         return rb.create_response()
     except Exps.AppException as error:
-        logger.error("Error | [invoke_agent]:", error)
+        logger.error(f"Error | [invoke_agent]: {error}")
         return rb.create_error_response(error)
     except Exps.InternalException as error:
         error.message = (
             "There is an internal error in server Contact with Admin to get support."
         )
-        logger.error("Error | [invoke_agent]:", error)
+        logger.error(f"Error | [invoke_agent]: {error}")
         return rb.create_error_response(error)
     except Exception as error:
-        logger.error("Uknown error | [invoke_agent]:", error, traceback.format_exc())
+        logger.error(f"Uknown error | [invoke_agent]: {error} {traceback.format_exc()}")
         error.message = (
-            "There is an internal error in server Contact with Admin to get support.")
+            "There is an internal error in server Contact with Admin to get support."
+        )
         return rb.create_error_response(Exps.UnknownException(str(error)))
     finally:
-        logger.debug("End execution of [invoke_agent]") 
+        logger.debug("End execution of [invoke_agent]")
