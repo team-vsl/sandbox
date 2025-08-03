@@ -32,7 +32,7 @@ def get_s3_client():
     return get_client("s3")
 
 
-def get_cogito_client():
+def get_cognito_client():
     return get_client("cognito-idp")
 
 

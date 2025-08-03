@@ -3,7 +3,15 @@ from datetime import datetime
 
 
 def to_camel_case(s):
-    return s[0].lower() + s[1:] if s else s
+    for sep in ["-", "_"]:
+        s = s.replace(sep, " ")
+
+    parts = s.split()
+
+    if not parts:
+        return ""
+
+    return parts[0].lower() + "".join(word.capitalize() for word in parts[1:])
 
 
 def convert_keys_and_values(obj):
