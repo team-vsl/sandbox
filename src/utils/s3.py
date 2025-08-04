@@ -6,7 +6,7 @@ from botocore.client import BaseClient
 
 # Import helpers
 from utils.helpers import string as string_helpers
-from utils.aws_clients import get_s3_client 
+from utils.aws_clients import get_s3_client
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -15,9 +15,10 @@ logging.basicConfig(level=logging.INFO)
 def upload_file(**params: dict):
     """Upload file to s3 bucket"""
     s3_client = params.get("s3_client")
-    
+
     if s3_client is None:
-        s3_client = get_s3_client()  # Tự tạo client nếu chưa có
+        s3_client = get_s3_client()
+
     file_name = params.get("file_name")
     bucket_name = params.get("bucket_name")
     object_name = params.get("object_name")
@@ -46,14 +47,34 @@ def upload_file(**params: dict):
     return True
 
 
+def get_file(**params: dict):
+    """Get content of an object in S3 bucket"""
+    s3_client = params.get("s3_client")
+
+    if s3_client is None:
+        s3_client = get_s3_client()
+
+    bucket_name = params.get("bucket_name")
+    object_key = params.get("object_key")
+
+    try:
+        response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
+        return response
+
+    except ClientError as e:
+        logging.error(e)
+        return
+
+
 def list_files(**params: dict):
     """List all files under a given prefix in an S3 bucket"""
     s3_client = params.get("s3_client")
-    bucket_name = params.get("bucket_name")
-    prefix = params.get("prefix", "")
 
     if s3_client is None:
-        raise Exception("S3 Client is required")
+        s3_client = get_s3_client()
+
+    bucket_name = params.get("bucket_name")
+    prefix = params.get("prefix", "")
 
     if string_helpers.is_empty(bucket_name):
         raise Exception("Name of bucket is required")
@@ -65,7 +86,7 @@ def list_files(**params: dict):
         files = []
         for page in page_iterator:
             contents = page.get("Contents", [])
-            files.extend([obj["Key"] for obj in contents])
+            files.extend(contents)
 
         return files
     except ClientError as e:
@@ -76,13 +97,14 @@ def list_files(**params: dict):
 def move_file(**params: dict):
     """Move a file from one prefix to another, optionally updating metadata"""
     s3_client = params.get("s3_client")
+
+    if s3_client is None:
+        s3_client = get_s3_client()
+
     bucket_name = params.get("bucket_name")
     source_key = params.get("source_key")
     destination_prefix = params.get("destination_prefix")
     new_metadata = params.get("metadata", {})
-
-    if s3_client is None:
-        raise Exception("S3 Client is required")
 
     if string_helpers.is_empty(bucket_name):
         raise Exception("Name of bucket is required")
@@ -102,7 +124,7 @@ def move_file(**params: dict):
             "Bucket": bucket_name,
             "CopySource": copy_source,
             "Key": dest_key,
-            "MetadataDirective": "COPY"
+            "MetadataDirective": "COPY",
         }
 
         if new_metadata:
@@ -117,14 +139,16 @@ def move_file(**params: dict):
         logging.error(e)
         return False
 
+
 def delete_file(**params: dict):
     """Delete a file from S3 bucket"""
     s3_client = params.get("s3_client")
-    bucket_name = params.get("bucket_name")
-    object_key = params.get("object_key")
 
     if s3_client is None:
-        raise Exception("S3 Client is required")
+        s3_client = get_s3_client()
+
+    bucket_name = params.get("bucket_name")
+    object_key = params.get("object_key")
 
     if string_helpers.is_empty(bucket_name):
         raise Exception("Name of bucket is required")

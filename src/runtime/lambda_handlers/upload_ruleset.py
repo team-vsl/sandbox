@@ -15,9 +15,9 @@ async def handler(event, context):
 
     try:
         # Extract request data
-        pathParams = request_helpers.get_path_params_from_event(event)
+        path_params = request_helpers.get_path_params_from_event(event)
         body = request_helpers.get_body_from_event(event)
-        ruleset_id = pathParams.get("ruleset_id")
+        ruleset_id = path_params.get("ruleset_id")
         content = body.get("content")
         if not ruleset_id or not content:
             raise Exps.AppException(

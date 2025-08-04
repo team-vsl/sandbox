@@ -17,7 +17,7 @@ async def handler(event, context):
     try:
         # Extract request data
         claims = request_helpers.get_claims_from_event(event)
-        pathParams = request_helpers.get_path_params_from_event(event)
+        path_params = request_helpers.get_path_params_from_event(event)
         body = request_helpers.get_body_from_event(event)
 
         # Return response

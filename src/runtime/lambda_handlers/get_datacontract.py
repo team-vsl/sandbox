@@ -9,6 +9,8 @@ from utils.helpers import request as request_helpers
 from utils.logger import get_logger
 from utils.response_builder import ResponseBuilder
 
+from services.data_contract import get_datacontract
+
 
 async def handler(event, context):
     rb = ResponseBuilder()
@@ -17,12 +19,15 @@ async def handler(event, context):
     try:
         # Extract request data
         claims = request_helpers.get_claims_from_event(event)
-        pathParams = request_helpers.get_path_params_from_event(event)
+        path_params = request_helpers.get_path_params_from_event(event)
+        query = request_helpers.get_query_from_event(event)
         body = request_helpers.get_body_from_event(event)
+
+        response = get_datacontract({"path_params": path_params, "query": query})
 
         # Return response
         rb.set_status_code(200)
-        rb.set_data({"id": pathParams.get("datacontract_id")})
+        rb.set_data(response)
 
         return rb.create_response()
     except Exps.AppException as error:

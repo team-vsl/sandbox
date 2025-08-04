@@ -74,7 +74,6 @@ def get_public_keys():
     Returns:
         list[dict]: một list các thông tin jwk từ Cognito Pool
     """
-    print("JWKs URL:", jwks_url)
     response = requests.get(jwks_url)
     response.raise_for_status()
     data = response.json()

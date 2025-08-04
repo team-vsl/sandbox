@@ -17,12 +17,12 @@ async def handler(event, context):
     try:
         # Extract request data
         claims = request_helpers.get_claims_from_event(event)
-        pathParams = request_helpers.get_path_params_from_event(event)
+        path_params = request_helpers.get_path_params_from_event(event)
         body = request_helpers.get_body_from_event(event)
 
         # Return response
         rb.set_status_code(200)
-        rb.set_data({"id": pathParams.get("ruleset_id")})
+        rb.set_data({"id": path_params.get("ruleset_id")})
 
         return rb.create_response()
     except Exps.AppException as error:

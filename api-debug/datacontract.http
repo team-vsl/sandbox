@@ -1,0 +1,18 @@
+@base_url = {{$dotenv PROTOCOL}}://{{$dotenv HOST_NAME}}:{{$dotenv PORT}}
+
+### List approved data contracts
+
+# @prompt state
+# @prompt access_token
+curl {{base_url}}/data-contracts?state={{state}} \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer {{access_token}}'
+
+### Get data contract
+
+# @prompt state
+# @prompt name
+# @prompt access_token
+curl {{base_url}}/data-contracts/{{name}}?state={{state}} \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer {{access_token}}'

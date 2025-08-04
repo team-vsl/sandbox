@@ -3,18 +3,18 @@
 # Import 3rd-party libraries
 
 # Import from utils
-from utils.s3 import list_files
+from utils.s3 import get_file
 from utils.constants import DATACONTRACT_BUCKET_NAME
 
 
-def list_datacontracts(params):
-    """List data contracts from bucket
+def get_datacontract(params):
+    """Get content of data contract
 
     Args:
         params (dict): parameters of this function
 
     Returns:
-        dict: result from list objects
+        Any: streaming response
     """
     path_params, query, body, headers, meta = (
         params.get("path_params"),
@@ -23,9 +23,13 @@ def list_datacontracts(params):
         params.get("headers"),
         params.get("meta", {}),
     )
-    
-    state = query.get("state")
-    
-    files = list_files(bucket_name=DATACONTRACT_BUCKET_NAME, prefix=state)
 
-    return files[1:]
+    default_ext = "yaml"
+    name = path_params.get("name")
+    state = query.get("state")
+
+    object_key = f"{state}/{name}.{default_ext}"
+
+    file = get_file(bucket_name=DATACONTRACT_BUCKET_NAME, object_key=object_key)
+
+    return file.get("Body")

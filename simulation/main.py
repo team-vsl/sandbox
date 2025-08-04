@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.join(BASE_DIR, "..", "src"))
 
 # Import external packages
 from fastapi import FastAPI, Request
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -24,10 +25,12 @@ from lambda_params import create_lambda_event
 # Import middlewares
 from middlewares.auth import authorization_dependency
 
+# Import sevices
+from services.data_contract import get_datacontract
+
 # Import handlers
 from runtime.lambda_handlers import (
     list_datacontracts,
-    get_datacontract,
     list_rulesets,
     get_ruleset,
     sign_in,
@@ -70,7 +73,7 @@ app = FastAPI(
 HOST = os.getenv("HOST")
 PORT = int(os.getenv("PORT"))
 
-origins = ["http://localhost:5173"]
+origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -124,11 +127,11 @@ async def handle_refresh_token(body: dict):
 
 
 @app.get(
-    "/teams/{team_id}/data-contracts",
+    "/data-contracts",
     tags=["Data Contract"],
     dependencies=[authorization_dependency(Roles.Employee)],
 )
-async def handle_list_datacontracts(team_id: str, q: Union[str, None] = None):
+async def handle_list_datacontracts(state: str):
     # handler_name = "list_datacontracts"
 
     # response = await execute_handler(
@@ -136,7 +139,7 @@ async def handle_list_datacontracts(team_id: str, q: Union[str, None] = None):
     # )
 
     response = await list_datacontracts.handler(
-        create_lambda_event(params={"team_id": team_id}), {}
+        create_lambda_event(query={"state": state}), {}
     )
 
     response["body"] = json.loads(response["body"])
@@ -145,30 +148,28 @@ async def handle_list_datacontracts(team_id: str, q: Union[str, None] = None):
 
 
 @app.get(
-    "/data-contracts/{datacontract_id}",
+    "/data-contracts/{datacontract_name}",
     tags=["Data Contract"],
     dependencies=[authorization_dependency(Roles.Employee)],
 )
-async def handle_get_datacontract(datacontract_id: str, q: Union[str, None] = None):
+async def handle_get_datacontract(datacontract_name: str, state: str):
     # handler_name = "get_datacontract"
 
     # response = await execute_handler(
     #     handler_name,
-    #     create_lambda_event(params={"datacontract_id": datacontract_id}),
+    #     create_lambda_event(params={"name": datacontract_name}),
     #     {},
     # )
 
-    response = await get_datacontract.handler(
-        create_lambda_event(params={"datacontract_id": datacontract_id}), {}
+    response = get_datacontract(
+        {"path_params": {"name": datacontract_name}, "query": {"state": state}}
     )
 
-    response["body"] = json.loads(response["body"])
-
-    return json_response(response)
+    return StreamingResponse(response)
 
 
 @app.get(
-    "/teams/{team_id}/rulesets",
+    "/rulesets",
     tags=["Ruleset"],
     dependencies=[authorization_dependency(Roles.Employee)],
 )
