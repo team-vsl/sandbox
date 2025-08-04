@@ -12,6 +12,7 @@ from authorizer import verify_token, get_authorization_token_from_headers
 # Import utils
 import utils.exceptions as Exps
 from utils.response_builder import ResponseBuilder
+from fastapi_response import json_response
 
 
 class AuthorizationMiddleware(BaseHTTPMiddleware):
@@ -24,11 +25,7 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
             err = Exps.UnauthorizedException()
             response = rb.create_error_response(err)
 
-            return JSONResponse(
-                status_code=response.get("statusCode"),
-                content=response.get("body"),
-                headers=response.get("headers"),
-            )
+            return json_response(response)
 
         request.state.claims = result.get("context")
 

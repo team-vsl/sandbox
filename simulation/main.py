@@ -12,8 +12,8 @@ sys.path.insert(0, os.path.join(BASE_DIR, "..", "src"))
 
 
 # Import external packages
-from fastapi import FastAPI, Request
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -25,12 +25,10 @@ from lambda_params import create_lambda_event
 # Import middlewares
 from middlewares.auth import authorization_dependency
 
-# Import sevices
-from services.data_contract import get_datacontract
-
 # Import handlers
 from runtime.lambda_handlers import (
     list_datacontracts,
+    get_datacontract,
     list_rulesets,
     get_ruleset,
     sign_in,
@@ -83,11 +81,41 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(HTTPException)
+async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    # Nếu detail là dict
+    if isinstance(exc.detail, dict):
+        return JSONResponse(
+            status_code=exc.status_code, content=exc.detail, headers=exc.headers
+        )
+
+    # Nếu detail chỉ là string, wrap lại theo format chuẩn
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": {
+                "message": str(exc.detail),
+                "title": "Error",
+                "code": "ERROR",
+                "details": None,
+            },
+            "data": None,
+            "meta": None,
+        },
+        headers=exc.headers,
+    )
+
+
 @app.get("/")
 def read_root():
-    return {
-        "message": "Hello World !!! This is a lambda simulation of VP Bank Hackathon Challenge 23 from VSL Team"
-    }
+    return json_response(
+        {
+            "body": {
+                "message": "Hello World !!! This is a lambda simulation of VP Bank Hackathon Challenge 23 from VSL Team."
+            },
+            "statusCode": 200,
+        }
+    )
 
 
 @app.post(

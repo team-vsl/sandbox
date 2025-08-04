@@ -1,5 +1,8 @@
 import json
 
+# Import external packages
+import orjson
+
 from .exceptions import (
     ErrorHttpStatusMap,
     InternalException,
@@ -130,7 +133,7 @@ class ResponseBuilder:
             # Unknown Error / Exception
             error = InternalException(str(error))
 
-        return json.dumps(
+        return orjson.dumps(
             {"error": error.toPlain(), "data": self.data, "meta": self.meta}
         )
 
@@ -140,7 +143,7 @@ class ResponseBuilder:
         Returns:
             dict: a body for error response
         """
-        return json.dumps({"data": self.data, "meta": self.meta})
+        return orjson.dumps({"data": self.data, "meta": self.meta})
 
     def create_error_response(self, error: Exception, statusCode: str | None = None):
         """Create an error response
