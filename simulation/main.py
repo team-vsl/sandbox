@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(BASE_DIR, "..", "src"))
 
 # Import external packages
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -31,6 +31,7 @@ from runtime.lambda_handlers import (
     get_datacontract,
     list_rulesets,
     get_ruleset,
+    get_datacontract_info,
     sign_in,
     refresh_tokens,
     get_etl_job,
@@ -69,7 +70,7 @@ app = FastAPI(
     openapi_tags=tags_metadata,
 )
 HOST = os.getenv("HOST")
-PORT = int(os.getenv("PORT"))
+PORT = int(os.getenv("PORT", "8000"))
 
 origins = ["*"]
 app.add_middleware(
@@ -176,6 +177,22 @@ async def handle_list_datacontracts(state: str):
 
 
 @app.get(
+    "/data-contracts/{datacontract_name}/info",
+    tags=["Data Contract"],
+    # dependencies=[authorization_dependency(Roles.Employee)],
+)
+async def handle_get_datacontract_info(datacontract_name: str, state: str):
+    response = await get_datacontract_info.handler(
+        create_lambda_event(params={"name": datacontract_name}, query={"state": state}),
+        {},
+    )
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
+@app.get(
     "/data-contracts/{datacontract_name}",
     tags=["Data Contract"],
     dependencies=[authorization_dependency(Roles.Employee)],
@@ -189,7 +206,7 @@ async def handle_get_datacontract(datacontract_name: str, state: str):
     #     {},
     # )
 
-    response = get_datacontract(
+    response = get_datacontract.get_datacontract(
         {"path_params": {"name": datacontract_name}, "query": {"state": state}}
     )
 

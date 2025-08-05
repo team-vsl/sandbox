@@ -1,0 +1,35 @@
+# Import built-in libraries
+import os
+import sys
+
+# Import 3rd-party libraries
+import requests
+
+# Import from utils
+
+def function_name(params):
+    """
+    This function does something.
+
+    Args:
+        params (dict): Parameters of this function.
+
+    Returns:
+        dict: Result from this function.
+    """
+    path_params = params.get("path_params")
+    query = params.get("query")
+    body = params.get("body")
+    headers = params.get("headers")
+    meta = params.get("meta", {})
+
+    # TODO: Add your logic here
+    result = {
+        "path": path_params,
+        "query": query,
+        "body": body,
+        "headers": headers,
+        "meta": meta
+    }
+
+    return result

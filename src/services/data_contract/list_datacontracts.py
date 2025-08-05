@@ -5,6 +5,7 @@
 # Import from utils
 from utils.s3 import list_files
 from utils.constants import DATACONTRACT_BUCKET_NAME
+from utils.helpers.data_contract import transform_dc_res_from_list_api
 
 
 def list_datacontracts(params):
@@ -23,9 +24,9 @@ def list_datacontracts(params):
         params.get("headers"),
         params.get("meta", {}),
     )
-    
+
     state = query.get("state")
-    
+
     files = list_files(bucket_name=DATACONTRACT_BUCKET_NAME, prefix=state)
 
-    return files[1:]
+    return [transform_dc_res_from_list_api(file) for file in files[1:]]

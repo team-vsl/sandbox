@@ -39,12 +39,29 @@ def upload_file(**params: dict):
         url = f"https://{bucket_name}.s3.{region}.amazonaws.com/{object_name}"
         extra_args = {"Metadata": metadata} if metadata else {}
         s3_client.upload_file(file_name, bucket_name, object_name, ExtraArgs=extra_args)
-        print("URL:", url)
+        return url
     except ClientError as e:
         logging.error(e)
-        return False
+        return ""
 
-    return True
+
+def get_file_meta(**params: dict):
+    """Get metadata of an object"""
+    s3_client = params.get("s3_client")
+
+    if s3_client is None:
+        s3_client = get_s3_client()
+
+    bucket_name = params.get("bucket_name")
+    object_key = params.get("object_key")
+
+    try:
+        response = s3_client.head_object(Bucket=bucket_name, Key=object_key)
+        return response
+
+    except ClientError as e:
+        logging.error(e)
+        return
 
 
 def get_file(**params: dict):
