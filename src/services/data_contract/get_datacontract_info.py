@@ -7,14 +7,16 @@ import requests
 
 # Import from utils
 import utils.exceptions as Exps
-from utils.constants import DATACONTRACT_BUCKET_NAME
+from utils.constants import DATACONTRACT_MAPPING_DYNAMODB_TABLE_NAME
 from utils.s3 import get_file_meta
+from utils.dynamodb import query_item
 from utils.helpers.data_contract import transform_dc_res_from_head_api
+from utils.helpers.other import convert_keys_to_camel_case
 
 
 def get_datacontract_info(params):
     """
-    Get information of a data contract (s3 object's metadata)
+    Get information of a data contract (from dynamodb)
 
     Args:
         params (dict): Parameters of this function.
@@ -28,23 +30,11 @@ def get_datacontract_info(params):
     headers = params.get("headers")
     meta = params.get("meta", {})
 
-    default_ext = "yaml"
     name = path_params.get("name")
-    state = query.get("state")
 
-    if state is None:
-        raise Exps.BadRequestException(
-            "State of object is required when get data contract's information"
-        )
-
-    object_key = f"{state}/{name}.{default_ext}"
-
-    file_meta = get_file_meta(
-        bucket_name=DATACONTRACT_BUCKET_NAME, object_key=object_key
+    result = query_item(
+        table_name=DATACONTRACT_MAPPING_DYNAMODB_TABLE_NAME,
+        partition_query={"key": "name", "value": name},
     )
 
-    result = transform_dc_res_from_head_api(file_meta)
-    result["name"] = name
-    result["state"] = state
-
-    return result
+    return convert_keys_to_camel_case(result)

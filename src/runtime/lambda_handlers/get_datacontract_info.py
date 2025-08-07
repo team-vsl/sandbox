@@ -22,11 +22,11 @@ async def handler(event, context):
         query = request_helpers.get_query_from_event(event)
         body = request_helpers.get_body_from_event(event)
 
-        response = get_datacontract_info({"path_params": path_params, "query": query})
+        response = get_datacontract_info({"path_params": path_params})
 
         # Return response
         rb.set_status_code(200)
-        rb.set_data(response)  # You can populate this with actual data
+        rb.set_data(response)
 
         return rb.create_response()
 

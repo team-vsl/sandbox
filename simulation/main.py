@@ -181,9 +181,9 @@ async def handle_list_datacontracts(state: str):
     tags=["Data Contract"],
     # dependencies=[authorization_dependency(Roles.Employee)],
 )
-async def handle_get_datacontract_info(datacontract_name: str, state: str):
+async def handle_get_datacontract_info(datacontract_name: str):
     response = await get_datacontract_info.handler(
-        create_lambda_event(params={"name": datacontract_name}, query={"state": state}),
+        create_lambda_event(params={"name": datacontract_name}),
         {},
     )
 
