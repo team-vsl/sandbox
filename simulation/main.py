@@ -12,8 +12,8 @@ sys.path.insert(0, os.path.join(BASE_DIR, "..", "src"))
 
 
 # Import external packages
-from fastapi import FastAPI, Request
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -25,14 +25,13 @@ from lambda_params import create_lambda_event
 # Import middlewares
 from middlewares.auth import authorization_dependency
 
-# Import sevices
-from services.data_contract import get_datacontract
-
 # Import handlers
 from runtime.lambda_handlers import (
     list_datacontracts,
+    get_datacontract,
     list_rulesets,
     get_ruleset,
+    get_datacontract_info,
     sign_in,
     refresh_tokens,
     get_etl_job,
@@ -71,7 +70,7 @@ app = FastAPI(
     openapi_tags=tags_metadata,
 )
 HOST = os.getenv("HOST")
-PORT = int(os.getenv("PORT"))
+PORT = int(os.getenv("PORT", "8000"))
 
 origins = ["*"]
 app.add_middleware(
@@ -83,11 +82,41 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(HTTPException)
+async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    # Nếu detail là dict
+    if isinstance(exc.detail, dict):
+        return JSONResponse(
+            status_code=exc.status_code, content=exc.detail, headers=exc.headers
+        )
+
+    # Nếu detail chỉ là string, wrap lại theo format chuẩn
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": {
+                "message": str(exc.detail),
+                "title": "Error",
+                "code": "ERROR",
+                "details": None,
+            },
+            "data": None,
+            "meta": None,
+        },
+        headers=exc.headers,
+    )
+
+
 @app.get("/")
 def read_root():
-    return {
-        "message": "Hello World !!! This is a lambda simulation of VP Bank Hackathon Challenge 23 from VSL Team"
-    }
+    return json_response(
+        {
+            "body": {
+                "message": "Hello World !!! This is a lambda simulation of VP Bank Hackathon Challenge 23 from VSL Team."
+            },
+            "statusCode": 200,
+        }
+    )
 
 
 @app.post(
@@ -148,6 +177,22 @@ async def handle_list_datacontracts(state: str):
 
 
 @app.get(
+    "/data-contracts/{datacontract_name}/info",
+    tags=["Data Contract"],
+    # dependencies=[authorization_dependency(Roles.Employee)],
+)
+async def handle_get_datacontract_info(datacontract_name: str):
+    response = await get_datacontract_info.handler(
+        create_lambda_event(params={"name": datacontract_name}),
+        {},
+    )
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
+@app.get(
     "/data-contracts/{datacontract_name}",
     tags=["Data Contract"],
     dependencies=[authorization_dependency(Roles.Employee)],
@@ -161,7 +206,7 @@ async def handle_get_datacontract(datacontract_name: str, state: str):
     #     {},
     # )
 
-    response = get_datacontract(
+    response = get_datacontract.get_datacontract(
         {"path_params": {"name": datacontract_name}, "query": {"state": state}}
     )
 

@@ -1,7 +1,6 @@
 # Import built-in libraries
-import traceback, os
-
-# Import 3rd-party libraries
+import traceback
+import os
 
 # Import utils
 import utils.exceptions as Exps
@@ -9,7 +8,7 @@ from utils.helpers import request as request_helpers
 from utils.logger import get_logger
 from utils.response_builder import ResponseBuilder
 
-from services.data_contract import get_datacontract
+from services.data_contract import get_datacontract_info
 
 
 async def handler(event, context):
@@ -23,7 +22,7 @@ async def handler(event, context):
         query = request_helpers.get_query_from_event(event)
         body = request_helpers.get_body_from_event(event)
 
-        response = get_datacontract({"path_params": path_params, "query": query})
+        response = get_datacontract_info({"path_params": path_params})
 
         # Return response
         rb.set_status_code(200)
@@ -32,13 +31,14 @@ async def handler(event, context):
         return rb.create_response()
 
     except Exps.AppException as error:
-        logger.error(f"Error | [get_datacontract]: {error}")
+        logger.error(f"Error | [get_datacontract_info]: {error}")
         return rb.create_error_response(error)
 
     except Exception as error:
         logger.error(
-            f"Uknown error | [get_datacontract]: {error} {traceback.format_exc()}"
+            f"Unknown error | [get_datacontract_info]: {error} {traceback.format_exc()}"
         )
         return rb.create_error_response(Exps.UnknownException(str(error)))
+
     finally:
-        logger.debug("End execution of [get_datacontract]")
+        logger.debug("End execution of [get_datacontract_info]")

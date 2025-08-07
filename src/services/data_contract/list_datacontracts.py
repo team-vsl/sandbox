@@ -3,8 +3,13 @@
 # Import 3rd-party libraries
 
 # Import from utils
+from utils.constants import (
+    DATACONTRACT_MAPPING_DYNAMODB_TABLE_NAME,
+    DATACONTRACT_DYNAMODB_STATE_GSI_NAME,
+)
 from utils.s3 import list_files
-from utils.constants import DATACONTRACT_BUCKET_NAME
+from utils.dynamodb import query_items_with_gsi
+from utils.helpers.other import convert_keys_to_camel_case
 
 
 def list_datacontracts(params):
@@ -23,9 +28,13 @@ def list_datacontracts(params):
         params.get("headers"),
         params.get("meta", {}),
     )
-    
-    state = query.get("state")
-    
-    files = list_files(bucket_name=DATACONTRACT_BUCKET_NAME, prefix=state)
 
-    return files[1:]
+    state = query.get("state")
+
+    result = query_items_with_gsi(
+        table_name=DATACONTRACT_MAPPING_DYNAMODB_TABLE_NAME,
+        index_name=DATACONTRACT_DYNAMODB_STATE_GSI_NAME,
+        partition_query={"key": "state", "value": state},
+    )
+
+    return convert_keys_to_camel_case(result)
