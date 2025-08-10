@@ -11,6 +11,7 @@ from utils.response_builder import ResponseBuilder
 
 from services.data_contract import list_datacontracts
 
+
 async def handler(event, context):
     rb = ResponseBuilder()
     logger = get_logger()
@@ -22,10 +23,7 @@ async def handler(event, context):
         query = request_helpers.get_query_from_event(event)
         body = request_helpers.get_body_from_event(event)
 
-        response = list_datacontracts({
-            "path_params": path_params,
-            "query": query
-        })
+        response = list_datacontracts({"path_params": path_params, "query": query})
 
         # Return response
         rb.set_status_code(200)
@@ -35,18 +33,9 @@ async def handler(event, context):
     except Exps.AppException as error:
         logger.error(f"Error | [list_datacontracts]: {error}")
         return rb.create_error_response(error)
-    except Exps.InternalException as error:
-        error.message = (
-            "There is an internal error in server Contact with Admin to get support."
-        )
-        logger.error(f"Error | [list_datacontracts]: {error}")
-        return rb.create_error_response(error)
     except Exception as error:
         logger.error(
             f"Uknown error | [list_datacontracts]: {error} {traceback.format_exc()}"
-        )
-        error.message = (
-            "There is an internal error in server Contact with Admin to get support."
         )
         return rb.create_error_response(Exps.UnknownException(str(error)))
     finally:

@@ -112,7 +112,7 @@ class AppException(Exception):
         self.details = None
 
     @staticmethod
-    def getHTTPErrorStatusCode(errorCode):
+    def get_http_status_code(errorCode):
         """Get corresponding http status code by error code
 
         Args:
@@ -128,7 +128,7 @@ class AppException(Exception):
 
         return httpStatusCode
 
-    def setErrorDetails(self, details: list | None = []):
+    def set_error_details(self, details: list | None = []):
         """Set new details data
 
         Args:
@@ -137,7 +137,7 @@ class AppException(Exception):
         print("Error details:", details, flush=True)
         self.details = details
 
-    def addErrorDetail(self, detail: Any):
+    def add_error_detail(self, detail: Any):
         """Add new detail to list
 
         Args:
@@ -146,7 +146,7 @@ class AppException(Exception):
         if isinstance(self.details, list):
             self.details.append(detail)
 
-    def toPlain(self):
+    def to_plain(self):
         """Use to convert exception content to raw object (Python Dict).
 
         Returns:
@@ -159,13 +159,13 @@ class AppException(Exception):
             "details": self.details,
         }
 
-    def toJSON(self):
+    def to_json(self):
         """Use to convert exception content to JSON.
 
         Returns:
             str: content of exception in JSON.
         """
-        return json.dumps(self.toPlain())
+        return json.dumps(self.to_plain())
 
     def __str__(self):
         return self.message

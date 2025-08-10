@@ -5,8 +5,8 @@ logging.basicConfig(level=logging.INFO)
 
 
 def generate_conversation(bedrock_client, model_id, system_prompts, messages):
-    """
-    Sends messages to a model.
+    """Sends messages to a model
+
     Args:
         bedrock_client: The Boto3 Bedrock runtime client.
         model_id (str): The model ID to use.
@@ -17,7 +17,6 @@ def generate_conversation(bedrock_client, model_id, system_prompts, messages):
         response (JSON): The conversation that the model generated.
 
     """
-
     logger.info("Generating message with model %s", model_id)
 
     # Inference parameters to use.

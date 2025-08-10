@@ -30,7 +30,7 @@ async def handler(event, context):
 
     except Exception as error:
         logger.error(f"Unknown error | [handler]: {error} {traceback.format_exc()}")
-        return rb.create_error_response(Exps.UnknownException(str(error))
+        return rb.create_error_response(Exps.UnknownException(str(error)))
 
     finally:
         logger.debug("End execution of [handler]")

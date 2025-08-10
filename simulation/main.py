@@ -34,8 +34,10 @@ from runtime.lambda_handlers import (
     get_datacontract_info,
     sign_in,
     refresh_tokens,
+    list_etl_jobs,
+    list_etl_job_runs,
     get_etl_job,
-    run_job,
+    run_etl_job,
     get_job_run,
     update_inline_ruleset,
 )
@@ -84,6 +86,8 @@ app.add_middleware(
 
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    print("Exc:", exc)
+
     # Nếu detail là dict
     if isinstance(exc.detail, dict):
         return JSONResponse(
@@ -255,6 +259,17 @@ async def handle_get_ruleset(ruleset_id: str, q: Union[str, None] = None):
     return json_response(response)
 
 
+@app.get("/glue-jobs", tags=["Glue ETL Job"])
+async def handle_list_jobs(limit: str | None = None, next_token: str | None = None):
+    response = await list_etl_jobs.handler(
+        create_lambda_event(query={"limit": limit, "next_token": next_token}), {}
+    )
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
 @app.get(
     "/glue-jobs/{job_name}",
     tags=["Glue ETL Job"],
@@ -286,7 +301,7 @@ async def handle_start_run_glue_job(job_name: str, body: dict | None = None):
     #     handler_name, create_lambda_event(params={"ruleset_id": ruleset_id}), {}
     # )
 
-    response = await run_job.handler(
+    response = await run_etl_job.handler(
         create_lambda_event(params={"job_name": job_name}, data=body), {}
     )
 
@@ -308,6 +323,23 @@ async def handle_update_inline_ruleset_in_job(job_name: str, body: dict):
 
     response = await update_inline_ruleset.handler(
         create_lambda_event(params={"job_name": job_name}, data=body), {}
+    )
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
+@app.get("/glue-jobs/{job_name}/run-status", tags=["Glue ETL Job"])
+async def handle_get_job_runs(
+    job_name: str, limit: str | None = None, next_token: str | None = None
+):
+    response = await list_etl_job_runs.handler(
+        create_lambda_event(
+            params={"job_name": job_name},
+            query={"limit": limit, "next_token": next_token},
+        ),
+        {},
     )
 
     response["body"] = json.loads(response["body"])
