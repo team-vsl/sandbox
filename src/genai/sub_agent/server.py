@@ -1,75 +1,57 @@
-from typing import List, Dict
-from pydantic import BaseModel
+from typing import List, Dict, Any
 from langgraph.graph import StateGraph, END
 from langchain_core.output_parsers import CommaSeparatedListOutputParser, JsonOutputParser
-from typing import TypedDict, Annotated, Union
+from typing import TypedDict, Annotated
 from langgraph.graph.message import add_messages
 from langchain_core.messages import HumanMessage, SystemMessage
-from genai.models import Server, S3Server, RedshiftServer
-import os
+from genai.models import S3Server, RedshiftServer, DataServer
 import time
+from pathlib import Path
+from genai.sub_agent.base_sub_agent import BaseSubAgent
 
 
 class ServerAgentState(TypedDict):
     messages: Annotated[List, add_messages]
-    data: Union[Server, None]
+    data: DataServer
     server_type: List
-    error: str
-    sys_prompt: Dict
 
 
-class RedShiftServerField(BaseModel):
-    server: Dict[str, RedshiftServer]
-
-
-class S3ServerField(BaseModel):
-    server: Dict[str, S3Server]
-
-
-class ServerAgent:
+class ServerAgent(BaseSubAgent):
     def __init__(self, llm_instance):
-        self._graph = self._create_graph()
-        self._llm = llm_instance
+        super().__init__(llm_instance=llm_instance)
+
+    def _get_state(self):
+        return ServerAgentState(messages=[], data=None, server_type=[])
+
+    def _get_sys_prompt_path(self) -> Path:
+        base_path = Path(__file__).parent.parent.parent.parent / "data" / "system_prompt"
+        return base_path / "server.json"
+
+    def _create_default_model(self) -> DataServer:
+        """Create a default DataServer object with empty values."""
+        return DataServer(
+            servers=None,
+            definitions=None,
+            environment="dev",
+            roles=None,
+        )
         
-    def detect_type(self, user_input: HumanMessage) -> str:
-        classification_prompt = """
- You are a system that classifies which server system can be used to store data. Server can be database, data lake, or data warehouse services.
-
-Supported server types:
-- "s3": aws s3 server
-- "redshift": aws redshift server
-- "gcs": google cloud storage
-- "glue": aws glue
-
-Based on the user's input, return the server(s) that are suitable: "s3", "redshift", "gcs", "glue".
-
-- You can return multiple server types, separated by commas.
-- If no server is suitable, return exactly: "invalid"
-- Output format: a plain list of server names, separated by commas.
-- Do not return brackets, quotes, sets, dictionaries, or any explanation.
-
-Example:
-User_input: I need use s3 & redshift for data warehouse  
-Output: s3, redshift
-        """
-
+    def detect_type(self, user_input: List[HumanMessage]) -> str:
+        classification_prompt = self._system_prompt["server_classifier_instruction"]
+        input_text = [request for request in user_input if isinstance(request, HumanMessage)]
+        if not classification_prompt:
+            raise ValueError("Classification prompt not found")
+        
         message = [
-            SystemMessage(content=classification_prompt),
-            user_input
-        ]
-
-
+            SystemMessage(content=classification_prompt)
+        ] + input_text
         response = self._llm.invoke(message)
-
-        time.sleep(60)
+        time.sleep(30)
 
         return response
     
     def check_type_node(self, state: ServerAgentState) -> ServerAgentState:
-        input_text = state.get("messages")[-1]
-
-        if not isinstance(input_text, HumanMessage):
-            return state
+        input_text = [request for request in state.get("messages") if isinstance(request, HumanMessage)]
 
         allowed_types = ["redshift", "s3"]
         response = self.detect_type(input_text)
@@ -79,62 +61,63 @@ Output: s3, redshift
 
         for item in detected_type:
             if item not in allowed_types:
-                state['error'] = "Error with detect type: {detected_type}".format(detected_type=detected_type)
-                return state
+                print("Error with detect type: {detected_type}".format(detected_type=detected_type))
+                continue
 
         state['server_type'] = detected_type
         return state
 
-    def load_system_prompt(self, state: ServerAgentState) -> ServerAgentState:
-        
-        server_types = state.get("server_type")
-
-        system_prompt = {}
-
-        for type in server_types:
-            path = f"/var/vpbank/datacontracts/sandbox/data/system_prompt/{type}_server.txt"
-            if os.path.exists(path):
-                with open(path, "r", encoding="utf-8") as fp: 
-                    prompt = fp.read()
-                system_prompt[type] = prompt
-            else:
-                system_prompt[type] = None
-                
-        state["sys_prompt"] = system_prompt
-
-        return state
-
     def generate_object_node(self, state: ServerAgentState) -> ServerAgentState:
-        
-        object_dict = {"redshift": RedShiftServerField, "s3": S3ServerField}
-        sys_prompt_list = state.get("sys_prompt")
-
-        human_request = state.get("messages")[-1]
-
+        object_dict = {"redshift": RedshiftServer, "s3": S3Server}
+        sys_prompt_list = self._system_prompt
+        server_types = state.get("server_type")
         all_servers = {}
+                
+        human_requests = [request for request in state.get("messages") if isinstance(request, HumanMessage)]
 
-        if not isinstance(human_request, HumanMessage):
-            return state
-
-        for key, sys_prompt in sys_prompt_list.items():
-
+        for server_type in server_types:
+            sys_prompt = sys_prompt_list.get(server_type + "_create_object")
             if not sys_prompt:
                 continue
-            
-            messages = [SystemMessage(content=sys_prompt), human_request]
-            parser = JsonOutputParser(pydantic_object=object_dict[key])
 
-            response = self._llm.invoke(messages)
-            all_servers.update(parser.parse(response.content))
-
-            time.sleep(60)
-
+            messages = [SystemMessage(content=sys_prompt)] + human_requests
+            parser = JsonOutputParser(pydantic_object=object_dict[server_type])
+            max_retries = 3
+            for attempt in range(max_retries):
+                response = self._llm.invoke(messages)
+                time.sleep(30)
+                try:
+                    draw_data = parser.parse(response.content).get("servers", {})
+                    # the is a bug model create full of data contract, not the part we need.
+                    data = self.post_processing_data(draw_data=draw_data, except_data_model_class=object_dict[server_type])
+                    if data:
+                        all_servers[server_type] = data
+                        break
+                except Exception:
+                    if attempt == max_retries - 1:
+                        state['data'] = self._create_default_model()
+                        return state
         state["data"] = all_servers
         return state
 
+    def post_processing_data(self, draw_data: Dict[str, Any], except_data_model_class):
+        object_fields = set(except_data_model_class.model_fields.keys())
+
+        filtered_data = {}
+
+        for field_name in object_fields:
+            if field_name in draw_data:
+                filtered_data[field_name] = draw_data[field_name]
+
+        try:
+            return except_data_model_class(**filtered_data)
+        except Exception as e:
+            print(f"Error: {e}")
+            return None
+
     @staticmethod
     def should_continue(state: ServerAgentState):
-        if state.get("error") is not None:
+        if state.get("server_type") is None:
             return "end"
         else:
             return "continue"
@@ -142,19 +125,11 @@ Output: s3, redshift
     def _create_graph(self):
         graph_builder = StateGraph(ServerAgentState)
         graph_builder.add_node("check_type", self.check_type_node)
-        graph_builder.add_node("load_prompt", self.load_system_prompt)
         graph_builder.add_node("generate_data", self.generate_object_node)
 
-        graph_builder.add_conditional_edges("check_type", self.should_continue, {"continue": "load_prompt", "end": END})
-        graph_builder.add_edge("load_prompt", "generate_data")
+        graph_builder.add_conditional_edges("check_type", self.should_continue, {"continue": "generate_data", "end": END})
         graph_builder.add_edge("generate_data", END)
-
         graph_builder.set_entry_point("check_type")
 
         graph = graph_builder.compile()
         return graph
-    
-    def invoke(self, user_query):
-        state = ServerAgentState(messages=[HumanMessage(content=user_query)])
-        rs = self._graph.invoke(state)
-        return rs
