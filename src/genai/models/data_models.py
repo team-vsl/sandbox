@@ -51,4 +51,4 @@ class ModelDef(BaseModel):
     
 
 class DataContractModels(BaseModel):
-    models: Dict[str, ModelDef]
+    data_models: Dict[str, ModelDef]
