@@ -1,13 +1,12 @@
 from langgraph.graph import StateGraph, END
-from langchain_core.output_parsers import CommaSeparatedListOutputParser, StrOutputParser
-from typing import TypedDict, Annotated, Dict
+from langchain_core.output_parsers import CommaSeparatedListOutputParser
+from typing import TypedDict, Annotated, Dict, List
 from langgraph.graph.message import add_messages
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
 from . import sub_agent
 import time
 from pathlib import Path
 from .root_model import DataContract
-from langgraph.checkpoint.memory import InMemorySaver
 import logging
 import json
 
@@ -23,25 +22,21 @@ class State(TypedDict):
 
 
 class DataContractAgent:
-    def __init__(self, llm_instance):
+    def __init__(self, llm_instance, data_contract:Dict = None):
         self._llm = llm_instance
-        self._memory = InMemorySaver()
         self._worker_agents = self._init_worker_agents()
         self._sys_prompt = self._get_sys_prompt()
         self._graph = self._create_graph()
-        self._state = State(messages=[], worker_agent=[], data_contract=None, check_intent_message="", error="")
-        
 
-    def _create_default_model(self) -> DataContract:
+        if data_contract:
+            self._state = State(messages=[], worker_agent=[], data_contract=data_contract, check_intent_message="", error="")
+        else:
+            self._state = State(messages=[], worker_agent=[], data_contract=self._create_default_data_contract(), check_intent_message="", error="")
+        
+    @staticmethod
+    def _create_default_data_contract():
         """Create a default DataServer object with empty values."""
-        return DataContract(
-            id="",
-            metainfo=None,
-            servers=None,
-            models=None,
-            terms=None,
-            servicelevels=None
-        )
+        return {"id": None, "metainfo": None, "server": None, "terms": None, "data_models": None, "servicelevels": None}
 
     def _get_sys_prompt_path(self) -> Path:
         base_path = Path(__file__).parent.parent.parent / "data" / "system_prompt"
@@ -60,14 +55,37 @@ class DataContractAgent:
 
 
     def _init_worker_agents(self):
-        # Ánh xạ tên worker_agent sang class agent tương ứng
         return {
-            "meta_info": sub_agent.InfoAgent(self._llm),
+            "metainfo": sub_agent.InfoAgent(self._llm),
             "data_model": sub_agent.DataModelAgent(self._llm),
             "server": sub_agent.ServerAgent(self._llm),
             "servicelevels": sub_agent.ServiceLevelsAgent(self._llm),
             "terms": sub_agent.TermsAgent(self._llm),
         }
+
+    def _change_create_to_update_pq(self, sub_agent_name:str, user_input:List[BaseMessage]):
+
+        last_user_input = user_input[-1]
+        if not isinstance(last_user_input, HumanMessage):
+            return user_input
+        data = self._state['data_contract'].get(sub_agent_name)     
+
+        update_str = last_user_input.content + f"\nUpdate the contract based on this data: \n{data}"
+        updated_user_input = user_input[:-1] + [HumanMessage(content=update_str)]
+        return updated_user_input
+        
+    @staticmethod
+    def _flatten_output_data(model_instance):
+        if not isinstance(model_instance, dict) and not isinstance(model_instance, list):
+            return model_instance.model_dump()
+
+        if isinstance(model_instance, list):
+            return [data.model_instance for data in model_instance]
+
+        if isinstance(model_instance, dict):
+            return {key:value.model_dump() for key, value in model_instance.items()}
+        
+        return model_instance
 
     def choose_worker_fn(self, user_inputs: list) -> str:
         classification_prompt = self._sys_prompt["choose_worker_agent_node"]
@@ -87,24 +105,25 @@ class DataContractAgent:
         if not user_inputs:
             return state
 
-        post_response_prompt = self._sys_prompt["check_required_info"]
+        post_response_prompt = self._sys_prompt["post_response"]
         logging.info("Post response processing")
 
         messages = [
-            SystemMessage(content=post_response_prompt), *user_inputs
+            SystemMessage(content=post_response_prompt), user_inputs[-1]
         ]
 
         response = self._llm.invoke(messages)
         time.sleep(20)
 
+        logging.info("\n" + response.content)
         state['messages'].append(AIMessage(content=response.content))
 
         return state
 
     def choose_worker_agent_node(self, state: State) -> State:
         messages = state.get("messages", [])
-        # Lấy 3 message gần nhất
-        user_inputs = [msg for msg in messages if isinstance(msg, HumanMessage)][-3:]
+
+        user_inputs = [msg for msg in messages if isinstance(msg, HumanMessage)][-1:]
         if not user_inputs:
             return state
         worker_agent_posible = ["data_model", "metainfo", "server", "servicelevels", "terms"]
@@ -129,6 +148,8 @@ class DataContractAgent:
 
     def agent_call_node(self, state: State) -> State:
         user_input = state.get("messages")
+        current_data_contract = state.get("data_contract")
+        
         worker_agents = state.get("worker_agent", [])
         results = {}
         for agent_name in worker_agents:
@@ -137,26 +158,24 @@ class DataContractAgent:
                 state['error'] = f"Không tìm thấy agent cho worker_agent: {agent_name}"
                 continue
 
-            logging.info(f"Agent {agent_name} running")
+            logging.info(f"Agent {agent_name} running \n")
 
-            agent_result = agent.invoke(user_input)
+            if current_data_contract.get(agent_name):
+                user_input = self._change_create_to_update_pq(agent_name, user_input)
 
-            logging.info(f"Agent {agent_name} result: {agent_result.get('data')}")
+            logging.info(f"{agent_name}'s input: {user_input}\n")
 
-            # Lấy trường data từ kết quả trả về
-            if hasattr(agent_result, 'get'):
-                data = agent_result.get('data', agent_result)
-            else:
-                data = agent_result
-            results[agent_name] = data
+            agent_response = agent.invoke(user_input).get("data")
+            logging.info(f"Agent {agent_name} result: {agent_response} / data type: {type(agent_response)}")
+            results[agent_name] = self._flatten_output_data(agent_response)
 
         dc_kwargs = {
             'id': 'auto-generated-id',
-            'info': results.get('metainfo') or {},
-            'server': results.get('server') or {},
-            'terms': results.get('terms') or {},
-            'data_models': results.get('data_model') or {},
-            'servicelevels': results.get('servicelevels') or {}
+            'metainfo': results.get('metainfo') or current_data_contract.get('metainfo'),
+            'server': results.get('server') or current_data_contract.get('server'),
+            'terms': results.get('terms') or current_data_contract.get('terms'),
+            'data_models': results.get('data_model') or current_data_contract.get('data_model'),
+            'servicelevels': results.get('servicelevels') or current_data_contract.get('servicelevels')
         }
         try:
             state['data_contract'] = dc_kwargs
@@ -179,6 +198,9 @@ class DataContractAgent:
         return graph
 
     def invoke(self, user_query):
+
+        logging.info(f'current_data: {self._state['data_contract']}')
+
         self._state['messages'].append(HumanMessage(content=user_query))
-        rs = self._graph.invoke(self._state)
-        return rs
+        self._state = self._graph.invoke(self._state)
+        return self._state

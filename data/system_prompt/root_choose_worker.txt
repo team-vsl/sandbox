@@ -35,5 +35,5 @@ User_input: The data model includes a table named `orders` with fields: id (prim
 Output: data_model
 
 Example 3:
-User_input: Please make this available in S3 format parquet, in the production environment, with read-only access for analysts.
-Output: server
+User_input: Tôi muốn đổi thông tin mục owner của data contract thành "Product Team".
+Output: metainfo

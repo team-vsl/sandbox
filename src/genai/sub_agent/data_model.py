@@ -34,7 +34,7 @@ class DataModelAgent(BaseSubAgent):
 
     def _create_default_model(self) -> DataContractModels:
         return DataContractModels(
-            models = {
+            data_models = {
                 "sample_field_keys": ModelDef(
                     type="table",
                     description="sample_description",
@@ -109,7 +109,7 @@ class DataModelAgent(BaseSubAgent):
 
             all_data.update(processed_data)
 
-        return DataContractModels(models=all_data)
+        return DataContractModels(data_models=all_data)
 
 
     def _create_graph(self):

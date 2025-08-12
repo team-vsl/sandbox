@@ -54,7 +54,6 @@ class InfoAgent(BaseSubAgent):
             time.sleep(30)
             try:  
                 draw_data = parser.parse(response.content).get("metainfo", {})
-                logger.info(response.content)
                 data = super().normalize_and_validate(MetaInfo, draw_data)
                 if data:
                     state["data"] = data
@@ -66,22 +65,6 @@ class InfoAgent(BaseSubAgent):
         # If all retries failed or no valid data found, set default Info
         state["data"] = self._create_default_model()
         return state
-
-    @staticmethod
-    def post_processing_data(draw_data: Dict[str, Any], except_data_model_class):
-        object_fields = set(except_data_model_class.model_fields.keys())
-
-        filtered_data = {}
-
-        for field_name in object_fields:
-            if field_name in draw_data:
-                filtered_data[field_name] = draw_data[field_name]
-
-        try:
-            return except_data_model_class(**filtered_data)
-        except Exception as e:
-            print(f"Error: {e}")
-            return None
 
     def _create_graph(self):
         graph_builder = StateGraph(InfoAgentState)

@@ -13,4 +13,14 @@ Return only the Output
 Example:
 User_input: Tôi muốn tạo một hợp đồng dữ liệu cho một sản phẩm dữ liệu, với hai trường: id và order, sử dụng Redshift làm kho dữ liệu. SLA: "Dữ liệu sẽ có sẵn trong vòng 25 giờ sau khi đơn hàng được đặt.
 Output:
-"- Bạn mô tả mục đích của data product này thế nào?\n  - Ai là người bên data product owner \", có thể thêm các thông tin liên lạc của product owner không?\n  Máy chủ/nền tảng (server):\n  - Bạn có thể cung cấp endpoint chi tiết Redshift không? Ví dụ: host, database, schema.\n  - Bạn có định nghĩa rõ môi trường (prod/dev), định dạng dữ liệu (CSV, Parquet) không? Ai có quyền truy cập?\n - Bạn định nghĩa tên mô hình (ví dụ: orders) và mô tả ngắn cho nó không?\n  - Hãy xác định kiểu dữ liệu (integer, timestamp, string,...) cho từng field, ví dụ id là integer hay string?\n  - Mỗi field bạn có thể cho thêm mô tả ngắn để người dùng hiểu mục đích.\n  - Bạn có trường nào quan trọng cần kiểm tra không? Ví dụ: Tổng số bản ghi ít nhất bao nhiêu?, id không được null?\n  Điều khoản sử dụng (terms):\n  - Các policies, licenses nào cần quan tâm\n"
+"- Bạn mô tả mục đích của data product này thế nào?
+- Ai là người bên data product owner, có thể thêm các thông tin liên lạc của product owner không?
+- Máy chủ/nền tảng (server)
+- Bạn có thể cung cấp endpoint chi tiết Redshift không? Ví dụ: host, database, schema.
+- Bạn có định nghĩa rõ môi trường (prod/dev), định dạng dữ liệu (CSV, Parquet) không? Ai có quyền truy cập?
+- Bạn định nghĩa tên mô hình (ví dụ: orders) và mô tả ngắn cho nó không?
+- Hãy xác định kiểu dữ liệu (integer, timestamp, string,...) cho từng field, ví dụ id là integer hay string?
+- Mỗi field bạn có thể cho thêm mô tả ngắn để người dùng hiểu mục đích.
+- Bạn có trường nào quan trọng cần kiểm tra không? Ví dụ: Tổng số bản ghi ít nhất bao nhiêu?, id không được null?
+- Điều khoản sử dụng (terms)
+- Các policies, licenses nào cần quan tâm"
