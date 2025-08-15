@@ -9,6 +9,7 @@ sys.path.insert(0, str(BASE_DIR / "src"))
 sys.path.insert(1, str(BASE_DIR / "venv"))
 
 from dotenv import load_dotenv
+
 load_dotenv(dotenv_path=str(BASE_DIR / ".env"))
 
 # Import từ services và utils
@@ -18,10 +19,7 @@ from utils.s3 import upload_file
 from utils.aws_clients import get_s3_client
 
 # Cấu hình logging rõ ràng hơn
-logging.basicConfig(
-    level=logging.INFO,
-    format="🔧 %(levelname)s: %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="🔧 %(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -43,14 +41,16 @@ async def main():
     s3_client = get_s3_client()
 
     try:
-        logger.info(f" Upload: {file_path} → bucket: {bucket_name} → object: {object_name}")
+        logger.info(
+            f" Upload: {file_path} → bucket: {bucket_name} → object: {object_name}"
+        )
 
         upload_file(
-            s3_client=s3_client,
+            client=s3_client,
             file_name=str(file_path),
             bucket_name=bucket_name,
             object_name=object_name,
-            metadata={"status": "pending"}
+            metadata={"status": "pending"},
         )
 
         region = s3_client.meta.region_name

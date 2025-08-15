@@ -26,7 +26,7 @@ def list_etl_job_runs(params):
     meta = params.get("meta", {})
 
     result = list_job_runs(
-        job_name=path_params.get("job_name"), limit=query.get("limit", 10)
+        job_name=path_params.get("job_name"), limit=int(query.get("limit", "10"))
     )
 
     return result

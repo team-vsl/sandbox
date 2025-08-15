@@ -13,6 +13,48 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
+def upload_fileobj(**params: dict):
+    """Upload file-like object to s3 bucket.
+
+    Args:
+        **params (dict): Dictionary of parameters. Expected keys:
+            - bytes (BytesIO): File-like object to upload. Required.
+            - bucket_name (str): Name of the S3 bucket. Required.
+            - object_name (str, optional): S3 object name. Defaults to file name.
+            - metadata (dict, optional): Metadata to attach to the uploaded file.
+            - client (boto3.Client, optional): S3 client instance. Defaults to result of get_s3_client().
+
+    Returns:
+        str: Public URL of the uploaded file in the S3 bucket.
+    """
+
+    s3_client = params.get("client", get_s3_client())
+
+    file_name = params.get("file_name", "")
+    bucket_name = params.get("bucket_name", "")
+    object_name = params.get("object_name", "")
+    metadata = params.get("metadata", {})
+
+    check_empty_or_throw_error(
+        file_name, "file_name", "File name is required to upload file"
+    )
+    check_empty_or_throw_error(
+        bucket_name, "bucket_name", "Bucket name is required to upload file"
+    )
+    check_empty_or_throw_error(
+        object_name, "object_name", "Object name is required to upload file"
+    )
+
+    region = s3_client.meta.region_name
+
+    url = f"https://{bucket_name}.s3.{region}.amazonaws.com/{object_name}"
+    extra_args = {"Metadata": metadata} if metadata else {}
+
+    s3_client.upload_fileobj(bytes, bucket_name, object_name, ExtraArgs=extra_args)
+
+    return url
+
+
 def upload_file(**params: dict):
     """Upload file to s3 bucket.
 

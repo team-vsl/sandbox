@@ -25,6 +25,6 @@ def list_etl_jobs(params):
     headers = params.get("headers")
     meta = params.get("meta", {})
 
-    result = list_jobs(limit=query.get("limit", 10))
+    result = list_jobs(limit=int(query.get("limit", "10")))
 
     return result

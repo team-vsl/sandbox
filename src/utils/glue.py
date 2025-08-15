@@ -70,7 +70,7 @@ def list_jobs(**params):
     glue_client = params.get("client", get_glue_client())
 
     next_token = params.get("next_token", None)
-    limit = params.get("limit", 5)
+    limit = params.get("limit", 10)
 
     # Prepare params for get_jobs
     _params = {"MaxResults": limit}
@@ -126,7 +126,7 @@ def list_job_runs(**params):
     glue_client = params.get("client", get_glue_client())
 
     next_token = params.get("next_token", None)
-    limit = params.get("limit", 5)
+    limit = params.get("limit", 10)
     job_name = params.get("job_name", "")
 
     check_empty_or_throw_error(job_name, "job_name")

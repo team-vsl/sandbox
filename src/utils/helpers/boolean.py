@@ -1,12 +1,12 @@
 # Import built-in
-from typing import TypeGuard, Any, Optional
+from typing import TypeGuard, Any
 
 # Import utils
 import utils.exceptions as Exps
 from utils.helpers.string import is_empty
 
 
-def check_none_or_throw_error(value: Any, value_name: str, msg: str | Optional = ""):
+def check_none_or_throw_error(value: Any, value_name: str, msg: str = ""):
     """Check if a value is None and can throw an error
 
     Args:
@@ -25,7 +25,7 @@ def check_none_or_throw_error(value: Any, value_name: str, msg: str | Optional =
         raise Exps.IOException(msg)
 
 
-def check_empty_or_throw_error(value: str, value_name: str, msg: str | Optional = ""):
+def check_empty_or_throw_error(value: str, value_name: str, msg: str = ""):
     """Check if a string is empty or None and can throw an error
 
     Args:
@@ -45,7 +45,7 @@ def check_empty_or_throw_error(value: str, value_name: str, msg: str | Optional 
 
 
 def check_attr_in_dict_or_throw_error(
-    attr_name: str, obj: dict, obj_name: str, msg: str | Optional = ""
+    attr_name: str, obj: dict, obj_name: str, msg: str = ""
 ):
     """Check if a attribute is in a dict and can throw an error
 

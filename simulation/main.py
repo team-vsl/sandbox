@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(BASE_DIR, "..", "src"))
 
 
 # Import external packages
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 # Import helper
 from handler_executor import execute_handler
 from fastapi_response import json_response
-from lambda_params import create_lambda_event
+from lambda_params import create_lambda_event, add_claims_to_request_ctx
 
 # Import middlewares
 from middlewares.auth import authorization_dependency
@@ -29,6 +29,7 @@ from middlewares.auth import authorization_dependency
 from runtime.lambda_handlers import (
     list_datacontracts,
     get_datacontract,
+    upload_draft_datacontract,
     list_rulesets,
     get_ruleset,
     get_datacontract_info,
@@ -42,7 +43,9 @@ from runtime.lambda_handlers import (
     update_inline_ruleset,
 )
 
+# Import utils
 from utils.roles import Roles
+from utils.dc_state import DataContractState
 
 load_dotenv()
 
@@ -159,6 +162,31 @@ async def handle_refresh_token(body: dict):
     return json_response(response)
 
 
+@app.post(
+    "/data-contract",
+    tags=["Data Contract"],
+)
+async def handle_upload_draft_datacontract(
+    body: dict, claims: dict = authorization_dependency(Roles.Employee)
+):
+    # handler_name = "list_datacontracts"
+
+    # response = await execute_handler(
+    #     handler_name, create_lambda_event(params={"team_id": team_id}), {}
+    # )
+
+    response = await upload_draft_datacontract.handler(
+        create_lambda_event(
+            data=body, request_context=add_claims_to_request_ctx({}, claims)
+        ),
+        {},
+    )
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
 @app.get(
     "/data-contracts",
     tags=["Data Contract"],
@@ -217,6 +245,54 @@ async def handle_get_datacontract(datacontract_name: str, state: str):
     return StreamingResponse(response)
 
 
+@app.post(
+    "/data-contracts/{datacontract_name}/approval",
+    tags=["Data Contract"],
+    dependencies=[authorization_dependency(Roles.Employee)],
+)
+async def handle_datacontract_approval(datacontract_name: str, body: dict):
+    # handler_name = "get_datacontract"
+
+    # response = await execute_handler(
+    #     handler_name,
+    #     create_lambda_event(params={"name": datacontract_name}),
+    #     {},
+    # )
+
+    response = get_datacontract.get_datacontract(
+        {
+            "path_params": {"name": datacontract_name},
+            "body": body,
+        }
+    )
+
+    return json_response(response)
+
+
+@app.post(
+    "/data-contracts/{datacontract_name}/rejection",
+    tags=["Data Contract"],
+    dependencies=[authorization_dependency(Roles.Employee)],
+)
+async def handle_datacontract_rejection(datacontract_name: str, body: dict):
+    # handler_name = "get_datacontract"
+
+    # response = await execute_handler(
+    #     handler_name,
+    #     create_lambda_event(params={"name": datacontract_name}),
+    #     {},
+    # )
+
+    response = get_datacontract.get_datacontract(
+        {
+            "path_params": {"name": datacontract_name},
+            "body": body,
+        }
+    )
+
+    return json_response(response)
+
+
 @app.get(
     "/rulesets",
     tags=["Ruleset"],
@@ -260,7 +336,7 @@ async def handle_get_ruleset(ruleset_id: str, q: Union[str, None] = None):
 
 
 @app.get("/glue-jobs", tags=["Glue ETL Job"])
-async def handle_list_jobs(limit: str | None = None, next_token: str | None = None):
+async def handle_list_jobs(limit: str = "10", next_token: str | None = None):
     response = await list_etl_jobs.handler(
         create_lambda_event(query={"limit": limit, "next_token": next_token}), {}
     )
@@ -332,7 +408,7 @@ async def handle_update_inline_ruleset_in_job(job_name: str, body: dict):
 
 @app.get("/glue-jobs/{job_name}/run-status", tags=["Glue ETL Job"])
 async def handle_get_job_runs(
-    job_name: str, limit: str | None = None, next_token: str | None = None
+    job_name: str, limit: str = "10", next_token: str | None = None
 ):
     response = await list_etl_job_runs.handler(
         create_lambda_event(
