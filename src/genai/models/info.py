@@ -1,17 +1,15 @@
 from pydantic import BaseModel, Field
-from typing import Literal, Optional, Dict, List, Any
+from typing import Optional
 
 
 class Contact(BaseModel):
-    name: str
-    email: Optional[str]
-    url: Optional[str]
+    name: Optional[str] = Field(None, description="The identifying name of the contact person/organization.")
+    email: Optional[str] = Field(None, description="The email address of the contact person/organization. This MUST be in the form of an email address.")
+    url: Optional[str] = Field(None, description="The URL pointing to the contact information. This MUST be in the form of a URL.")
 
 
-class Info(BaseModel):
-    title: str = Field(..., description="The title of the data contract.")
-    version: str = Field(..., description="The version of the data contract document.")
-    status: Literal["proposed", "in development", "active", "deprecated", "retired"] = Field(...)
-    description: Optional[str] = None
-    owner: Optional[str] = None
-    contact: Optional[Contact] = None
+class MetaInfo(BaseModel):
+    title: Optional[str] = Field(None, description="The title of the data contract.")
+    description: Optional[str] = Field(None, description="A description of the data contract.")
+    owner: Optional[str] = Field(None, description="The owner or team responsible for managing the data contract and providing the data.")
+    contact: Optional[Contact] = Field(None, description="Contact information for the data contract.")
