@@ -1,5 +1,5 @@
 # Import built-in libraries
-import traceback, os
+import traceback
 
 # Import 3rd-party libraries
 
@@ -10,7 +10,7 @@ from utils.logger import get_logger
 from utils.response_builder import ResponseBuilder
 
 # Import services
-from services.ruleset import generate_ruleset
+from services.ruleset import activate_ruleset
 
 
 async def handler(event, context):
@@ -23,7 +23,7 @@ async def handler(event, context):
         path_params = request_helpers.get_path_params_from_event(event)
         body = request_helpers.get_body_from_event(event)
 
-        response = generate_ruleset({"body": body})
+        response = await activate_ruleset({"path_params": path_params, "body": body})
 
         # Return response
         rb.set_status_code(200)
@@ -31,12 +31,13 @@ async def handler(event, context):
 
         return rb.create_response()
     except Exps.AppException as error:
-        logger.error(f"Error | [generate_ruleset]: {error}")
+        logger.error(f"Error | [activate_ruleset]: {error}")
         return rb.create_error_response(error)
+
     except Exception as error:
         logger.error(
-            f"Uknown error | [generate_ruleset]: {error} {traceback.format_exc()}"
+            f"Uknown error | [activate_ruleset]: {error} {traceback.format_exc()}"
         )
         return rb.create_error_response(Exps.UnknownException(str(error)))
     finally:
-        logger.debug("End execution of [generate_ruleset]")
+        logger.debug("End execution of [activate_ruleset]")

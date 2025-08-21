@@ -1,19 +1,13 @@
 import logging
 
-import boto3
-
-from botocore.exceptions import ClientError
-
 # Import from utils
 from utils.aws_clients import get_bedrock_client
-from dotenv import load_dotenv
 from langchain_aws import ChatBedrock
+
+from genai.contract_agent import DataContractAgent
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-from genai.contract_agent import DataContractAgent
-
-region_name = "ap-southeast-1"
 
 
 def generate_draft_datacontract(params):

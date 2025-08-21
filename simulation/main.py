@@ -30,12 +30,17 @@ from runtime.lambda_handlers import (
     generate_draft_datacontract,
     list_datacontracts,
     get_datacontract,
+    get_datacontract_info,
     approve_draft_datacontract,
     reject_draft_datacontract,
     upload_draft_datacontract,
+    generate_ruleset,
     list_rulesets,
     get_ruleset,
-    get_datacontract_info,
+    get_ruleset_info,
+    activate_ruleset,
+    inactivate_ruleset,
+    upload_ruleset,
     sign_in,
     refresh_tokens,
     list_etl_jobs,
@@ -45,6 +50,10 @@ from runtime.lambda_handlers import (
     get_job_run,
     update_inline_ruleset,
 )
+
+# Import services
+from services.data_contract import get_datacontract
+from services.ruleset import get_ruleset
 
 # Import utils
 from utils.roles import Roles
@@ -281,7 +290,7 @@ async def handle_get_datacontract(
     #     {},
     # )
 
-    response = get_datacontract.get_datacontract(
+    response = get_datacontract(
         {
             "path_params": {"name": datacontract_name},
             "query": {"state": state},
@@ -310,13 +319,15 @@ async def handle_approve_datacontract(
     #     {},
     # )
 
-    response = approve_draft_datacontract.handler(
+    response = await approve_draft_datacontract.handler(
         create_lambda_event(
-            params={"team_id": team_id},
+            params={"datacontract_name": datacontract_name},
             request_context=add_claims_to_request_ctx({}, claims),
         ),
         {},
     )
+
+    response["body"] = json.loads(response["body"])
 
     return json_response(response)
 
@@ -339,13 +350,65 @@ async def handle_reject_datacontract(
     #     {},
     # )
 
-    response = reject_draft_datacontract.handler(
+    response = await reject_draft_datacontract.handler(
         create_lambda_event(
-            params={"team_id": team_id},
+            params={"datacontract_name": datacontract_name},
             request_context=add_claims_to_request_ctx({}, claims),
         ),
         {},
     )
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
+@app.post(
+    "/ruleset",
+    tags=["Ruleset"],
+)
+async def handle_generate_ruleset(
+    body: dict, claims: dict = authorization_dependency(Roles.Employee)
+):
+    # handler_name = "list_datacontracts"
+
+    # response = await execute_handler(
+    #     handler_name, create_lambda_event(params={"team_id": team_id}), {}
+    # )
+
+    response = await generate_ruleset.handler(
+        create_lambda_event(
+            data=body, request_context=add_claims_to_request_ctx({}, claims)
+        ),
+        {},
+    )
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
+@app.post(
+    "/ruleset/upload",
+    tags=["Ruleset"],
+)
+async def handle_upload_draft_datacontract(
+    body: dict, claims: dict = authorization_dependency(Roles.Employee)
+):
+    # handler_name = "list_datacontracts"
+
+    # response = await execute_handler(
+    #     handler_name, create_lambda_event(params={"team_id": team_id}), {}
+    # )
+
+    response = await upload_ruleset.handler(
+        create_lambda_event(
+            data=body, request_context=add_claims_to_request_ctx({}, claims)
+        ),
+        {},
+    )
+
+    response["body"] = json.loads(response["body"])
 
     return json_response(response)
 
@@ -356,8 +419,7 @@ async def handle_reject_datacontract(
     # dependencies=[authorization_dependency(Roles.Employee)],
 )
 async def handle_list_rulesets(
-    team_id: str,
-    q: Union[str, None] = None,
+    limit: str = "10",
     claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "list_rulesets"
@@ -368,7 +430,7 @@ async def handle_list_rulesets(
 
     response = await list_rulesets.handler(
         create_lambda_event(
-            params={"team_id": team_id},
+            query={"limit": limit},
             request_context=add_claims_to_request_ctx({}, claims),
         ),
         {},
@@ -380,13 +442,12 @@ async def handle_list_rulesets(
 
 
 @app.get(
-    "/rulesets/{ruleset_id}",
+    "/rulesets/{ruleset_name}",
     tags=["Ruleset"],
     # dependencies=[authorization_dependency(Roles.Employee)],
 )
-async def handle_get_ruleset(
-    ruleset_id: str,
-    q: Union[str, None] = None,
+async def handle_get_ruleset_info(
+    ruleset_name: str,
     claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "get_ruleset"
@@ -395,9 +456,102 @@ async def handle_get_ruleset(
     #     handler_name, create_lambda_event(params={"ruleset_id": ruleset_id}), {}
     # )
 
-    response = await get_ruleset.handler(
+    response = await get_ruleset_info.handler(
         create_lambda_event(
-            params={"ruleset_id": ruleset_id},
+            params={"ruleset_name": ruleset_name},
+            request_context=add_claims_to_request_ctx({}, claims),
+        ),
+        {},
+    )
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
+@app.get(
+    "/rulesets/{ruleset_name}",
+    tags=["Ruleset"],
+    # dependencies=[authorization_dependency(Roles.Employee)],
+)
+async def handle_get_ruleset(
+    ruleset_name: str,
+    state: str,
+    claims: dict = authorization_dependency(Roles.Employee),
+):
+    # handler_name = "get_datacontract"
+
+    # response = await execute_handler(
+    #     handler_name,
+    #     create_lambda_event(params={"name": datacontract_name}),
+    #     {},
+    # )
+
+    response = get_ruleset(
+        {
+            "path_params": {"name": ruleset_name},
+            "query": {"state": state},
+            "meta": {"claims": claims},
+        }
+    )
+
+    return StreamingResponse(response)
+
+
+@app.post(
+    "/rulesets/{ruleset_name}/activation",
+    tags=["Ruleset"],
+    # dependencies=[authorization_dependency(Roles.Employee)],
+)
+async def handle_activate_ruleset(
+    ruleset_name: str,
+    body: dict,
+    claims: dict = authorization_dependency(Roles.Employee),
+):
+    # handler_name = "get_datacontract"
+
+    # response = await execute_handler(
+    #     handler_name,
+    #     create_lambda_event(params={"name": datacontract_name}),
+    #     {},
+    # )
+
+    response = await activate_ruleset.handler(
+        create_lambda_event(
+            params={"ruleset_name": ruleset_name},
+            data=body,
+            request_context=add_claims_to_request_ctx({}, claims),
+        ),
+        {},
+    )
+
+    response["body"] = json.loads(response["body"])
+
+    return json_response(response)
+
+
+@app.post(
+    "/rulesets/{ruleset_name}/inactivation",
+    tags=["Data Contract"],
+    # dependencies=[authorization_dependency(Roles.Employee)],
+)
+async def handle_inactivate_ruleset(
+    ruleset_name: str,
+    body: dict,
+    claims: dict = authorization_dependency(Roles.Employee),
+):
+    # handler_name = "get_datacontract"
+
+    # response = await execute_handler(
+    #     handler_name,
+    #     create_lambda_event(params={"name": datacontract_name}),
+    #     {},
+    # )
+
+    response = await inactivate_ruleset.handler(
+        create_lambda_event(
+            params={"ruleset_name": ruleset_name},
+            data=body,
             request_context=add_claims_to_request_ctx({}, claims),
         ),
         {},
