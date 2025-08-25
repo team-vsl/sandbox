@@ -55,8 +55,8 @@ async def activate_ruleset(params):
     default_ext = "txt"
     old_state = RulesetState.Inactive
     new_state = RulesetState.Active
-    source_object_key = f"/{old_state}/{object_name}.{default_ext}"
-    dest_object_key = f"/{new_state}/{object_name}.{default_ext}"
+    source_object_key = f"{old_state}/{object_name}.{default_ext}"
+    dest_object_key = f"{new_state}/{object_name}.{default_ext}"
 
     # Move object from /pending to /approved
     move_file_tasks = [
@@ -75,7 +75,7 @@ async def activate_ruleset(params):
             table_name=RULESET_MAPPING_DYNAMODB_TABLE_NAME,
             partition_query={"key": "name", "value": object_name},
             sort_query={"key": "version", "value": version},
-            data={"state": new_state},
+            data={"state": new_state, "job_name": job_name},
         )
     ]
 
@@ -111,7 +111,7 @@ async def activate_ruleset(params):
                 table_name=RULESET_MAPPING_DYNAMODB_TABLE_NAME,
                 partition_query={"key": "name", "value": current_active_ruleset_name},
                 sort_query={"key": "version", "value": current_active_ruleset_version},
-                data={"state": current_active_rl_new_state},
+                data={"state": current_active_rl_new_state, "job_name": ""},
             )
         )
 
@@ -119,7 +119,7 @@ async def activate_ruleset(params):
     responses = await asyncio.gather(*update_item_tasks)
 
     get_file_response = get_file(
-        bucket_name=RULESET_BUCKET_NAME, object_name=dest_object_key
+        bucket_name=RULESET_BUCKET_NAME, object_key=dest_object_key
     )
     object_content = get_file_response["Body"].read()
     ruleset_content = object_content.decode("utf-8")

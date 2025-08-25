@@ -143,7 +143,7 @@ def get_file(**params: dict):
         bucket_name, "bucket_name", "Bucket name is required to get file"
     )
     check_empty_or_throw_error(
-        object_key, "object_name", "Object name is required to get file"
+        object_key, "object_key", "Object key is required to get file"
     )
 
     response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
@@ -221,12 +221,11 @@ def move_file(**params: dict):
         dest_key, "dest_key", "Destination key is required to move file"
     )
 
-    dest_key = os.path.join(destination_prefix, os.path.basename(source_key))
     copy_source = {"Bucket": bucket_name, "Key": source_key}
 
     # Nếu có metadata mới → REPLACE, ngược lại giữ nguyên
     copy_args = {
-        "Bucket": bucket_name,
+        "Bucket": dest_bucket_name,
         "CopySource": copy_source,
         "Key": dest_key,
         "MetadataDirective": "COPY",
@@ -235,6 +234,8 @@ def move_file(**params: dict):
     if new_metadata:
         copy_args["MetadataDirective"] = "REPLACE"
         copy_args["Metadata"] = new_metadata
+
+    print("Copy params:", copy_args)
 
     s3_client.copy_object(**copy_args)
     s3_client.delete_object(Bucket=bucket_name, Key=source_key)

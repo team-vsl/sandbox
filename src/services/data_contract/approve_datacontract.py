@@ -10,6 +10,7 @@ from utils.constants import (
     DATACONTRACT_BUCKET_NAME,
     DATACONTRACT_MAPPING_DYNAMODB_TABLE_NAME,
 )
+from utils.dc_state import DataContractState
 from utils.dynamodb import update_item
 from utils.s3 import move_file
 from utils.helpers.boolean import check_empty_or_throw_error
@@ -41,10 +42,10 @@ def approve_datacontract(params):
     )
 
     default_ext = "yaml"
-    old_state = "pending"
-    new_state = "approved"
-    source_object_key = f"/{old_state}/{object_name}.{default_ext}"
-    dest_object_key = f"/{new_state}/{object_name}.{default_ext}"
+    old_state = DataContractState.Pending
+    new_state = DataContractState.Approved
+    source_object_key = f"{old_state}/{object_name}.{default_ext}"
+    dest_object_key = f"{new_state}/{object_name}.{default_ext}"
 
     # Move object from /pending to /approved
     move_file(

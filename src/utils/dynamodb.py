@@ -181,15 +181,15 @@ def query_items(**params: Any):
     if sort_query:
         check_attr_in_dict_or_throw_error(
             "key",
-            sort_key,
-            "sort_key",
-            "key of sort_key is required to query item",
+            sort_query,
+            "sort_query",
+            "key of sort_query is required to query item",
         )
         check_attr_in_dict_or_throw_error(
             "value",
-            sort_key,
-            "sort_key",
-            "value of sort_key is required to query item",
+            sort_query,
+            "sort_query",
+            "value of sort_query is required to query item",
         )
 
         if sort_query.get("op", None) is None:
@@ -358,8 +358,6 @@ def query_items_with_gsi(**params):
         _params["ExclusiveStartKey"] = {
             start_point.get("key"): start_point.get("value")
         }
-
-    print("Query Items Params with GSI:", _params)
 
     table = get_dynamodb_table(table_name)
     response = table.query(**_params)
