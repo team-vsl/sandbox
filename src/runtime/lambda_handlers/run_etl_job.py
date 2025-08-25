@@ -12,7 +12,7 @@ from utils.response_builder import ResponseBuilder
 from services.job import run_etl_job
 
 
-async def handler(event, context):
+def handler(event, context):
     rb = ResponseBuilder()
     logger = get_logger()
 

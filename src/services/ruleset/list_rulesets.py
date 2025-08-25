@@ -4,8 +4,8 @@
 
 # Import from utils
 from utils.constants import (
-    DATACONTRACT_MAPPING_DYNAMODB_TABLE_NAME,
-    DATACONTRACT_DYNAMODB_STATE_GSI_NAME,
+    RULESET_MAPPING_DYNAMODB_TABLE_NAME,
+    RULESET_DYNAMODB_STATE_GSI_NAME,
 )
 from utils.s3 import list_files
 from utils.dynamodb import query_items_with_gsi
@@ -32,8 +32,8 @@ def list_rulesets(params):
     state = query.get("state")
 
     result = query_items_with_gsi(
-        table_name=DATACONTRACT_MAPPING_DYNAMODB_TABLE_NAME,
-        index_name=DATACONTRACT_DYNAMODB_STATE_GSI_NAME,
+        table_name=RULESET_MAPPING_DYNAMODB_TABLE_NAME,
+        index_name=RULESET_DYNAMODB_STATE_GSI_NAME,
         partition_query={"key": "state", "value": state},
     )
 

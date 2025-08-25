@@ -36,7 +36,7 @@ async def activate_ruleset(params):
 
     object_name = path_params.get("ruleset_name", "")
 
-    job_name = body.get("job_name", "")
+    job_name = body.get("jobName", "")
     version = body.get("version", "")
     current_active_ruleset_name = body.get("currentActiveRulesetName", "")
     current_active_ruleset_version = body.get("currentActiveRulesetVersion", "")

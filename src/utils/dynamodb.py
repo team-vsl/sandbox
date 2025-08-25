@@ -359,6 +359,8 @@ def query_items_with_gsi(**params):
             start_point.get("key"): start_point.get("value")
         }
 
+    print("Query Items Params with GSI:", _params)
+
     table = get_dynamodb_table(table_name)
     response = table.query(**_params)
 

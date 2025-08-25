@@ -11,7 +11,7 @@ from utils.response_builder import ResponseBuilder
 from services.ruleset import upload_ruleset
 
 
-async def handler(event, context):
+def handler(event, context):
     rb = ResponseBuilder()
     logger = get_logger()
 

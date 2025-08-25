@@ -2,7 +2,7 @@
 import json
 import sys
 import os
-from typing import Union
+from typing import Union, Annotated
 
 # Import the ./packages to sys path, because we need python recognize
 # all of packages inside ./packages
@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(BASE_DIR, "..", "src"))
 
 
 # Import external packages
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request, Body, Depends
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -21,6 +21,7 @@ from dotenv import load_dotenv
 from handler_executor import execute_handler
 from fastapi_response import json_response
 from lambda_params import create_lambda_event, add_claims_to_request_ctx
+from openapi_config import create_custom_openapi_schema
 
 # Import middlewares
 from middlewares.auth import authorization_dependency
@@ -36,7 +37,6 @@ from runtime.lambda_handlers import (
     upload_draft_datacontract,
     generate_ruleset,
     list_rulesets,
-    get_ruleset,
     get_ruleset_info,
     activate_ruleset,
     inactivate_ruleset,
@@ -81,11 +81,9 @@ tags_metadata = [
 ]
 
 app = FastAPI(
-    title="VP Bank Challenge #23 API Demo - VSL Team",
-    description="Đây là API Demo của Challenge #23 VPBank Hackathon (Smart data contract with genai empowerment)",
-    version="0.0.1",
     openapi_tags=tags_metadata,
 )
+app.openapi = lambda: create_custom_openapi_schema(app)
 HOST = os.getenv("HOST")
 PORT = int(os.getenv("PORT", "8000"))
 
@@ -126,7 +124,7 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
     )
 
 
-@app.get("/")
+@app.get("/", tags=["Hello World"])
 def read_root():
     return json_response(
         {
@@ -142,7 +140,9 @@ def read_root():
     "/auth/sign-in",
     tags=["Auth"],
 )
-async def handle_sign_in(body: dict):
+async def handle_sign_in(
+    body: Annotated[dict, Body(example={"username": "string", "password": "string"})],
+):
     # handler_name = "get_ruleset"
 
     # response = await execute_handler(
@@ -160,7 +160,9 @@ async def handle_sign_in(body: dict):
     "/auth/refresh-tokens",
     tags=["Auth"],
 )
-async def handle_refresh_token(body: dict):
+async def handle_refresh_token(
+    body: Annotated[dict, Body(example={"refreshTokens": "string"})],
+):
     # handler_name = "get_ruleset"
 
     # response = await execute_handler(
@@ -179,7 +181,8 @@ async def handle_refresh_token(body: dict):
     tags=["Data Contract"],
 )
 async def handle_generate_draft_datacontract(
-    body: dict, claims: dict = authorization_dependency(Roles.Employee)
+    body: Annotated[dict, Body(example={"content": "string"})],
+    claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "list_datacontracts"
 
@@ -204,7 +207,8 @@ async def handle_generate_draft_datacontract(
     tags=["Data Contract"],
 )
 async def handle_upload_draft_datacontract(
-    body: dict, claims: dict = authorization_dependency(Roles.Employee)
+    body: Annotated[dict, Body(example={"content": "yaml_string"})],
+    claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "list_datacontracts"
 
@@ -230,7 +234,10 @@ async def handle_upload_draft_datacontract(
     # dependencies=[authorization_dependency(Roles.Employee)],
 )
 async def handle_list_datacontracts(
-    state: str, claims: dict = authorization_dependency(Roles.Employee)
+    state: str,
+    limit: str = "10",
+    startKey: str = "",
+    claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "list_datacontracts"
 
@@ -240,7 +247,7 @@ async def handle_list_datacontracts(
 
     response = await list_datacontracts.handler(
         create_lambda_event(
-            query={"state": state},
+            query={"limit": limit, "start_key": startKey, "state": state},
             request_context=add_claims_to_request_ctx({}, claims),
         ),
         {},
@@ -392,8 +399,11 @@ async def handle_generate_ruleset(
     "/ruleset/upload",
     tags=["Ruleset"],
 )
-async def handle_upload_draft_datacontract(
-    body: dict, claims: dict = authorization_dependency(Roles.Employee)
+async def handle_upload_ruleset(
+    body: Annotated[
+        dict, Body(example={"content": "string", "name": "string", "version": "string"})
+    ],
+    claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "list_datacontracts"
 
@@ -401,7 +411,7 @@ async def handle_upload_draft_datacontract(
     #     handler_name, create_lambda_event(params={"team_id": team_id}), {}
     # )
 
-    response = await upload_ruleset.handler(
+    response = upload_ruleset.handler(
         create_lambda_event(
             data=body, request_context=add_claims_to_request_ctx({}, claims)
         ),
@@ -419,7 +429,9 @@ async def handle_upload_draft_datacontract(
     # dependencies=[authorization_dependency(Roles.Employee)],
 )
 async def handle_list_rulesets(
+    state: str,
     limit: str = "10",
+    startKey: str = "",
     claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "list_rulesets"
@@ -428,9 +440,9 @@ async def handle_list_rulesets(
     #     handler_name, create_lambda_event(params={"team_id": team_id}), {}
     # )
 
-    response = await list_rulesets.handler(
+    response = list_rulesets.handler(
         create_lambda_event(
-            query={"limit": limit},
+            query={"limit": limit, "start_key": startKey, "state": state},
             request_context=add_claims_to_request_ctx({}, claims),
         ),
         {},
@@ -442,7 +454,7 @@ async def handle_list_rulesets(
 
 
 @app.get(
-    "/rulesets/{ruleset_name}",
+    "/rulesets/{ruleset_name}/info",
     tags=["Ruleset"],
     # dependencies=[authorization_dependency(Roles.Employee)],
 )
@@ -458,7 +470,7 @@ async def handle_get_ruleset_info(
 
     response = await get_ruleset_info.handler(
         create_lambda_event(
-            params={"ruleset_name": ruleset_name},
+            params={"name": ruleset_name},
             request_context=add_claims_to_request_ctx({}, claims),
         ),
         {},
@@ -505,7 +517,17 @@ async def handle_get_ruleset(
 )
 async def handle_activate_ruleset(
     ruleset_name: str,
-    body: dict,
+    body: Annotated[
+        dict,
+        Body(
+            example={
+                "jobName": "string",
+                "version": "string",
+                "currentActiveRulesetName": "string",
+                "currentActiveRulesetVersion": "string",
+            }
+        ),
+    ],
     claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "get_datacontract"
@@ -532,12 +554,12 @@ async def handle_activate_ruleset(
 
 @app.post(
     "/rulesets/{ruleset_name}/inactivation",
-    tags=["Data Contract"],
+    tags=["Ruleset"],
     # dependencies=[authorization_dependency(Roles.Employee)],
 )
 async def handle_inactivate_ruleset(
     ruleset_name: str,
-    body: dict,
+    body: Annotated[dict, Body(example={"version": "string"})],
     claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "get_datacontract"
@@ -548,7 +570,7 @@ async def handle_inactivate_ruleset(
     #     {},
     # )
 
-    response = await inactivate_ruleset.handler(
+    response = inactivate_ruleset.handler(
         create_lambda_event(
             params={"ruleset_name": ruleset_name},
             data=body,
@@ -622,7 +644,7 @@ async def handle_start_run_glue_job(
     #     handler_name, create_lambda_event(params={"ruleset_id": ruleset_id}), {}
     # )
 
-    response = await run_etl_job.handler(
+    response = run_etl_job.handler(
         create_lambda_event(
             params={"job_name": job_name},
             data=body,
@@ -641,7 +663,9 @@ async def handle_start_run_glue_job(
     tags=["Glue ETL Job"],
 )
 async def handle_update_inline_ruleset_in_job(
-    job_name: str, body: dict, claims: dict = authorization_dependency(Roles.Employee)
+    job_name: str,
+    body: Annotated[dict, Body(example={"content": "string"})],
+    claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "get_ruleset"
 
@@ -649,7 +673,7 @@ async def handle_update_inline_ruleset_in_job(
     #     handler_name, create_lambda_event(params={"ruleset_id": ruleset_id}), {}
     # )
 
-    response = await update_inline_ruleset.handler(
+    response = update_inline_ruleset.handler(
         create_lambda_event(
             params={"job_name": job_name},
             data=body,

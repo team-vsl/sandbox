@@ -38,7 +38,7 @@ def upload_ruleset(params):
     claims = meta.get("claims", {})
     content = body.get("content", "")
     name = body.get("name", "")
-    version = version.get("version", "")
+    version = body.get("version", "")
 
     check_empty_or_throw_error(
         content,
@@ -77,7 +77,7 @@ def upload_ruleset(params):
     object_key = f"{RulesetState.Inactive}/{ruleset_meta.get("name")}.{default_ext}"
     bytes = io.BytesIO(content.encode("utf-8"))
     url = upload_fileobj(
-        bytes=bytes,
+        fileobj=bytes,
         bucket_name=RULESET_BUCKET_NAME,
         object_name=object_key,
         metadata={
@@ -85,6 +85,8 @@ def upload_ruleset(params):
             "team": ruleset_meta.get("team"),
         },
     )
+
+    print("File is saved at:", url)
 
     # Save metadata
     add_item(table_name=RULESET_MAPPING_DYNAMODB_TABLE_NAME, data=ruleset_meta)

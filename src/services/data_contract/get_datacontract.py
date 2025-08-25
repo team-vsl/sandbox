@@ -30,6 +30,8 @@ def get_datacontract(params):
 
     object_key = f"{state}/{name}.{default_ext}"
 
+    print("Object Key:", object_key)
+
     file = get_file(bucket_name=DATACONTRACT_BUCKET_NAME, object_key=object_key)
 
     return file.get("Body")

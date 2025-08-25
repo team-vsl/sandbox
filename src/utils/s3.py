@@ -18,7 +18,7 @@ def upload_fileobj(**params: dict):
 
     Args:
         **params (dict): Dictionary of parameters. Expected keys:
-            - bytes (BytesIO): File-like object to upload. Required.
+            - fileobj (BytesIO): File-like object to upload. Required.
             - bucket_name (str): Name of the S3 bucket. Required.
             - object_name (str, optional): S3 object name. Defaults to file name.
             - metadata (dict, optional): Metadata to attach to the uploaded file.
@@ -29,15 +29,11 @@ def upload_fileobj(**params: dict):
     """
 
     s3_client = params.get("client", get_s3_client())
-
-    file_name = params.get("file_name", "")
+    fileobj = params.get("fileobj")
     bucket_name = params.get("bucket_name", "")
     object_name = params.get("object_name", "")
     metadata = params.get("metadata", {})
 
-    check_empty_or_throw_error(
-        file_name, "file_name", "File name is required to upload file"
-    )
     check_empty_or_throw_error(
         bucket_name, "bucket_name", "Bucket name is required to upload file"
     )
@@ -50,7 +46,7 @@ def upload_fileobj(**params: dict):
     url = f"https://{bucket_name}.s3.{region}.amazonaws.com/{object_name}"
     extra_args = {"Metadata": metadata} if metadata else {}
 
-    s3_client.upload_fileobj(bytes, bucket_name, object_name, ExtraArgs=extra_args)
+    s3_client.upload_fileobj(fileobj, bucket_name, object_name, ExtraArgs=extra_args)
 
     return url
 

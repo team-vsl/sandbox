@@ -12,7 +12,7 @@ from utils.response_builder import ResponseBuilder
 from utils.glue import update_inline_ruleset_in_job
 
 
-async def handler(event, context):
+def handler(event, context):
     rb = ResponseBuilder()
     logger = get_logger()
 
@@ -24,7 +24,7 @@ async def handler(event, context):
 
         response = update_inline_ruleset_in_job(
             job_name=path_params.get("job_name"),
-            new_ruleset=body.get("ruleset"),
+            new_ruleset=body.get("content"),
             dq_node_name="Evaluate Data Quality",
         )
 
