@@ -2,16 +2,23 @@ import re
 from datetime import datetime
 
 
-def to_camel_case(s):
-    for sep in ["-", "_"]:
-        s = s.replace(sep, " ")
+def to_camel_case(s: str) -> str:
+    if not s:
+        return ""
 
-    parts = s.split()
+    # Bước 1: Thay thế _ và - thành khoảng trắng
+    s = re.sub(r"[_\-]+", " ", s)
 
+    # Bước 2: Tách PascalCase hoặc camelCase (textAText → text A Text)
+    s = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", s)
+    s = re.sub(r"([A-Z])([A-Z][a-z])", r"\1 \2", s)
+
+    # Bước 3: Tách và chuẩn hóa
+    parts = s.strip().split()
     if not parts:
         return ""
 
-    return parts[0].lower() + "".join(word.capitalize() for word in parts[1:])
+    return parts[0].lower() + "".join(p.capitalize() for p in parts[1:])
 
 
 def convert_keys_and_values(obj):
@@ -27,9 +34,11 @@ def convert_keys_and_values(obj):
 
 def convert_keys_to_camel_case(obj):
     if isinstance(obj, dict):
-        return {to_camel_case(k): convert_keys_to_camel_case(v) for k, v in obj.items()}
+        return {to_camel_case(k): convert_keys_and_values(v) for k, v in obj.items()}
     elif isinstance(obj, list):
-        return [convert_keys_to_camel_case(item) for item in obj]
+        return [convert_keys_and_values(item) for item in obj]
+    elif isinstance(obj, datetime):
+        return obj.isoformat()
     else:
         return obj
 

@@ -6,30 +6,26 @@ import utils.exceptions as Exps
 from utils.helpers import request as request_helpers
 from utils.logger import get_logger
 from utils.response_builder import ResponseBuilder
-from utils.ruleset_s3 import upload_ruleset
+
+# Import services
+from services.ruleset import upload_ruleset
 
 
-async def handler(event, context):
+def handler(event, context):
     rb = ResponseBuilder()
     logger = get_logger()
 
     try:
         # Extract request data
-        pathParams = request_helpers.get_path_params_from_event(event)
+        claims = request_helpers.get_claims_from_event(event)
+        path_params = request_helpers.get_path_params_from_event(event)
         body = request_helpers.get_body_from_event(event)
-        ruleset_id = pathParams.get("ruleset_id")
-        content = body.get("content")
-        if not ruleset_id or not content:
-            raise Exps.AppException(
-                "Missing ruleset_id in path param or content in request body"
-            )
 
         # Upload ruleset
-        upload_ruleset(ruleset_id, content)
+        response = upload_ruleset({"body": body, "meta": {"claims": claims}})
+
         rb.set_status_code(200)
-        rb.set_data(
-            {"message": "Ruleset uploaded successfully", "ruleset_id": ruleset_id}
-        )
+        rb.set_data(response)
         return rb.create_response()
     except Exps.AppException as error:
         logger.error(f"Error | [upload_ruleset]: {error}")

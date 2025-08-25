@@ -2,6 +2,7 @@
 
 @username = {{$dotenv TEST_USER_USERNAME}}
 @password = {{$dotenv TEST_USER_PASSWORD}}
+@refresh_token = {{$dotenv REFRESH_TOKEN}}
 
 ### Send request to sign in
 
@@ -12,6 +13,13 @@ curl -X POST {{base_url}}/auth/sign-in \
     "password": "{{password}}"
   }'
 
+### Send request to refresh token 
+
+curl -X POST {{base_url}}/auth/refresh-tokens \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "refreshToken": "{{refresh_token}}"
+  }'
 
 ### Test - Call GET /data-contracts/:datacontract_id with token
 # @prompt access_token

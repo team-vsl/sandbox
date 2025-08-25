@@ -2,31 +2,6 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Literal, Any, Dict
 
 
-class Quality(BaseModel):
-    type: str
-
-
-class DescriptionTextQuality(Quality):
-    type: str = "text"
-    description: str
-
-
-class SQLQuality(Quality):
-    type: str = "sql"
-    description: str = Field(..., description="A plain text describing the quality of the data.")
-    query: str = Field(..., description="A SQL query that returns a single number to compare with the threshold.")
-    dialect: str = Field(..., description="The SQL dialect that is used for the query. Should be compatible " \
-                         "to the server type. Examples: postgres, spark, bigquery, snowflake, duckdb, …")
-    mustBe: Optional[int] = Field(..., description="The threshold to check the return value of the query.")
-    mustNotBe: Optional[int] = Field(..., description="The threshold to check the return value of the query.")
-    mustBeGreaterThan: Optional[int] = Field(..., description="The threshold to check the return value of the query.")
-    mustBeGreaterThanOrEqualTo: Optional[int] = Field(..., description="The threshold to check the return value of the query.")
-    mustBeLessThan: Optional[int] = Field(..., description="The threshold to check the return value of the query.")
-    mustBeLessThanOrEqualTo: Optional[int] = Field(..., description="The threshold to check the return value of the query.")
-    mustBeBetween: Optional[int] = Field(..., description="The threshold to check the return value of the query.")
-    mustNotBeBetween: Optional[int] = Field(..., description="The threshold to check the return value of the query.")
-
-
 class TransformationObject(BaseModel):
     type: Literal["DIRECT", "INDIRECT"] = Field(..., description="Indicates how direct is the relationship " \
     "e.g. in query. Allows values are: DIRECT and INDIRECT.")
@@ -140,7 +115,6 @@ class DataField(BaseModel):
     "Use only when type is map .")
     values: Optional["DataField"] = Field(None, description="Describes the value structure of a map. " \
     "Use only when type is map .")
-    quality: Optional[List[Quality]] = Field(None, description="Specifies the quality attributes on field level.")
     lineage: Optional[LineageObject] = Field(None, description="Provides information where the data comes from.")
     config: Optional[ConfigObject] = Field(None, description="Any additional key-value pairs that might be " \
     "useful for further tooling.")

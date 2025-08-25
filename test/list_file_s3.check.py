@@ -9,6 +9,7 @@ sys.path.insert(0, str(BASE_DIR / "src"))
 sys.path.insert(1, str(BASE_DIR / "venv"))
 
 from dotenv import load_dotenv
+
 load_dotenv(dotenv_path=str(BASE_DIR / ".env"))
 
 # Import từ utils
@@ -33,11 +34,7 @@ async def main():
         logger.info(f" Đang liệt kê file trong folder: {prefix}")
 
         try:
-            files = list_files(
-                s3_client=s3_client,
-                bucket_name=bucket_name,
-                prefix=prefix
-            )
+            files = list_files(client=s3_client, bucket_name=bucket_name, prefix=prefix)
 
             # Lọc bỏ object là thư mục "prefix/"
             for f in files:

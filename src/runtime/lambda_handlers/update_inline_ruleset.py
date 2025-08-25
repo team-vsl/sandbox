@@ -12,7 +12,7 @@ from utils.response_builder import ResponseBuilder
 from utils.glue import update_inline_ruleset_in_job
 
 
-async def handler(event, context):
+def handler(event, context):
     rb = ResponseBuilder()
     logger = get_logger()
 
@@ -24,29 +24,22 @@ async def handler(event, context):
 
         response = update_inline_ruleset_in_job(
             job_name=path_params.get("job_name"),
-            new_ruleset=body.get("ruleset"),
+            new_ruleset=body.get("content"),
             dq_node_name="Evaluate Data Quality",
         )
 
         # Return response
         rb.set_status_code(200)
-        rb.set_data(response)
+        rb.set_data({"jobName": response})
 
         return rb.create_response()
     except Exps.AppException as error:
-        logger.error(f"Error | [start_job]: {error}")
-        return rb.create_error_response(error)
-    except Exps.InternalException as error:
-        error.message = (
-            "There is an internal error in server Contact with Admin to get support."
-        )
-        logger.error(f"Error | [start_job]: {error}")
+        logger.error(f"Error | [update_inline_ruleset]: {error}")
         return rb.create_error_response(error)
     except Exception as error:
-        logger.error(f"Uknown error | [start_job]: {error} {traceback.format_exc()}")
-        error.message = (
-            "There is an internal error in server Contact with Admin to get support."
+        logger.error(
+            f"Uknown error | [update_inline_ruleset]: {error} {traceback.format_exc()}"
         )
         return rb.create_error_response(Exps.UnknownException(str(error)))
     finally:
-        logger.debug("End execution of [start_job]")
+        logger.debug("End execution of [update_inline_ruleset]")

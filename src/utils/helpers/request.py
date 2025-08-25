@@ -29,7 +29,7 @@ def get_path_params_from_event(event: dict) -> dict:
     return pathParameters
 
 
-def getQueryFromEvent(event: dict) -> dict:
+def get_query_from_event(event: dict) -> dict:
     """Get the query string from the event
 
     Args:
@@ -42,7 +42,7 @@ def getQueryFromEvent(event: dict) -> dict:
     return queryStringParameters
 
 
-def getHeadersFromEvent(event: dict):
+def get_headers_from_event(event: dict):
     """
     Get the headers from the event.
     """

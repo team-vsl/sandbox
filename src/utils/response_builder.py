@@ -1,5 +1,8 @@
 import json
 
+# Import external packages
+import orjson
+
 from .exceptions import (
     ErrorHttpStatusMap,
     InternalException,
@@ -29,7 +32,7 @@ class ResponseBuilder:
         pass
 
     @staticmethod
-    def checkStatusCodeType(statusCode, options: dict | None = None):
+    def check_status_code_type(statusCode, options: dict | None = None):
         """Check type of status code
 
         Args:
@@ -67,7 +70,7 @@ class ResponseBuilder:
             statusCode (int | str): value of status code which you want to set
         """
         # Check type of status code first
-        ResponseBuilder.checkStatusCodeType(statusCode, {"canThrowError": True})
+        ResponseBuilder.check_status_code_type(statusCode, {"canThrowError": True})
         self.statusCode = statusCode
 
     def set_data(self, data: int | str | dict):
@@ -78,7 +81,7 @@ class ResponseBuilder:
         """
         self.data = data
 
-    def setHeaders(self, headers: dict):
+    def set_headers(self, headers: dict):
         """Use to set headers for response
 
         Args:
@@ -92,7 +95,7 @@ class ResponseBuilder:
 
         self.headers = headers
 
-    def setMetadata(self, meta: dict):
+    def set_metadata(self, meta: dict):
         """Set metadata for response
 
         Args:
@@ -106,7 +109,7 @@ class ResponseBuilder:
 
         self.meta = meta
 
-    def createErrorBody(self, error: Exception):
+    def create_error_body(self, error: Exception):
         """Create a body for error response
 
         Args:
@@ -130,17 +133,17 @@ class ResponseBuilder:
             # Unknown Error / Exception
             error = InternalException(str(error))
 
-        return json.dumps(
-            {"error": error.toPlain(), "data": self.data, "meta": self.meta}
+        return orjson.dumps(
+            {"error": error.to_plain(), "data": self.data, "meta": self.meta}
         )
 
-    def createBody(self):
+    def create_body(self):
         """Create a body for response
 
         Returns:
             dict: a body for error response
         """
-        return json.dumps({"data": self.data, "meta": self.meta})
+        return orjson.dumps({"data": self.data, "meta": self.meta})
 
     def create_error_response(self, error: Exception, statusCode: str | None = None):
         """Create an error response
@@ -152,12 +155,12 @@ class ResponseBuilder:
         Returns:
             dict: an error response
         """
-        body = self.createErrorBody(error)
+        body = self.create_error_body(error)
 
         self.statusCode = ErrorHttpStatusMap[error.code]
 
         # Override value if `statusCode` is set
-        if ResponseBuilder.checkStatusCodeType(statusCode):
+        if ResponseBuilder.check_status_code_type(statusCode):
             self.statusCode = statusCode
 
         return {"statusCode": self.statusCode, "headers": self.headers, "body": body}
@@ -173,6 +176,6 @@ class ResponseBuilder:
         ):
             self.set_status_code(statusCode)
 
-        body = self.createBody()
+        body = self.create_body()
 
         return {"statusCode": self.statusCode, "headers": self.headers, "body": body}

@@ -1,13 +1,14 @@
 # Import built-in libraries
 import traceback
-
-# Import 3rd-party libraries
+import os
 
 # Import utils
 import utils.exceptions as Exps
 from utils.helpers import request as request_helpers
 from utils.logger import get_logger
 from utils.response_builder import ResponseBuilder
+
+from services.data_contract import get_datacontract_info
 
 
 async def handler(event, context):
@@ -17,30 +18,27 @@ async def handler(event, context):
     try:
         # Extract request data
         claims = request_helpers.get_claims_from_event(event)
-        pathParams = request_helpers.get_path_params_from_event(event)
+        path_params = request_helpers.get_path_params_from_event(event)
+        query = request_helpers.get_query_from_event(event)
         body = request_helpers.get_body_from_event(event)
+
+        response = get_datacontract_info({"path_params": path_params})
 
         # Return response
         rb.set_status_code(200)
-        rb.set_data({})
+        rb.set_data(response)
 
         return rb.create_response()
+
     except Exps.AppException as error:
-        logger.error(f"Error | [approve_ruleset]: {error}")
+        logger.error(f"Error | [get_datacontract_info]: {error}")
         return rb.create_error_response(error)
-    except Exps.InternalException as error:
-        error.message = (
-            "There is an internal error in server Contact with Admin to get support."
-        )
-        logger.error(f"Error | [approve_ruleset]: {error}")
-        return rb.create_error_response(error)
+
     except Exception as error:
         logger.error(
-            f"Uknown error | [approve_ruleset]: {error} {traceback.format_exc()}"
-        )
-        error.message = (
-            "There is an internal error in server Contact with Admin to get support."
+            f"Unknown error | [get_datacontract_info]: {error} {traceback.format_exc()}"
         )
         return rb.create_error_response(Exps.UnknownException(str(error)))
+
     finally:
-        logger.debug("End execution of [approve_ruleset]")
+        logger.debug("End execution of [get_datacontract_info]")

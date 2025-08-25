@@ -1,45 +1,69 @@
-from typing import List, Dict
-from pydantic import BaseModel
+from typing import List, Dict, Any
 from langgraph.graph import StateGraph, END
 from langchain_core.output_parsers import JsonOutputParser
-from typing import TypedDict, Annotated, Union
+from typing import TypedDict, Annotated
 from langgraph.graph.message import add_messages
 from langchain_core.messages import HumanMessage, SystemMessage
-from genai.models import Info
+from genai.models import MetaInfo
+import time
+from pathlib import Path
+from genai.sub_agent.base_sub_agent import BaseSubAgent
+import logging
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 class InfoAgentState(TypedDict):
     messages: Annotated[List, add_messages]
-    data: Union[Info, None]
+    data: MetaInfo
 
 
-class InfoField(BaseModel):
-    info: Info
-
-
-class InfoAgent:
+class InfoAgent(BaseSubAgent):
     def __init__(self, llm_instance):
-        self._graph = self._create_graph()
-        self._llm = llm_instance
-        self._system_prompt: Dict[str, str] = self._load_system_prompt()
+        super().__init__(llm_instance=llm_instance)
 
-    @staticmethod
-    def _load_system_prompt():
-        with open("/var/vpbank/datacontracts/sandbox/data/system_prompt/info.txt", "r", encoding="utf-8") as fp:
-            data = fp.read()
-        return {"create_object": data}
+    def _get_state(self):
+        return InfoAgentState(messages=[], data=None)
 
+    def _get_sys_prompt_path(self) -> Path:
+        base_path = Path(__file__).parent.parent.parent.parent / "data" / "system_prompt"
+        return base_path / "info.json"
+
+    def _create_default_model(self) -> MetaInfo:
+        """Create a default Info object with empty values."""
+        return MetaInfo(
+            title="",
+            description=None,
+            owner=None,
+            contact=None
+        )
+    
     def generate_object_node(self, state: InfoAgentState) -> InfoAgentState:
         sys_prompt = self._system_prompt.get("create_object")
-        human_request = state.get("messages")[-1]
-
-        if not isinstance(human_request, HumanMessage):
-            return state
+        human_requests = [
+            request for request in state.get("messages") if isinstance(request, HumanMessage)
+        ]
+        messages = [SystemMessage(content=sys_prompt)] + human_requests
+        parser = JsonOutputParser(pydantic_object=MetaInfo)
+        max_retries = 3
         
-        messages = [SystemMessage(content=sys_prompt), human_request]
-        parser = JsonOutputParser(pydantic_object=InfoField)
-        response = self._llm.invoke(messages)
-        state["data"] = parser.parse(response.content)
+        for attempt in range(max_retries):
+            response = self._llm.invoke(messages)
+            time.sleep(30)
+            try:  
+                draw_data = parser.parse(response.content).get("metainfo", {})
+                data = super().normalize_and_validate(MetaInfo, draw_data)
+                if data:
+                    state["data"] = data
+                    return state
+            except Exception:
+                if attempt == max_retries - 1:
+                    break
+        
+        # If all retries failed or no valid data found, set default Info
+        state["data"] = self._create_default_model()
         return state
 
     def _create_graph(self):
@@ -51,7 +75,3 @@ class InfoAgent:
         graph = graph_builder.compile()
         return graph
     
-    def invoke(self, user_query):
-        state = InfoAgentState(messages=[HumanMessage(content=user_query)])
-        rs = self._graph.invoke(state)
-        return rs

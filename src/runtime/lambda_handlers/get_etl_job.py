@@ -9,6 +9,7 @@ from utils.helpers import request as request_helpers
 from utils.logger import get_logger
 from utils.response_builder import ResponseBuilder
 
+# Import services
 from utils.glue import get_job
 
 
@@ -32,17 +33,8 @@ async def handler(event, context):
     except Exps.AppException as error:
         logger.error(f"Error | [get_etl_job]: {error}")
         return rb.create_error_response(error)
-    except Exps.InternalException as error:
-        error.message = (
-            "There is an internal error in server Contact with Admin to get support."
-        )
-        logger.error(f"Error | [get_etl_job]: {error}")
-        return rb.create_error_response(error)
     except Exception as error:
         logger.error(f"Uknown error | [get_etl_job]: {error} {traceback.format_exc()}")
-        error.message = (
-            "There is an internal error in server Contact with Admin to get support."
-        )
         return rb.create_error_response(Exps.UnknownException(str(error)))
     finally:
         logger.debug("End execution of [get_etl_job]")
