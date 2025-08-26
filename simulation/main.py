@@ -377,7 +377,8 @@ async def handle_reject_datacontract(
     tags=["Ruleset"],
 )
 async def handle_generate_ruleset(
-    body: dict, claims: dict = authorization_dependency(Roles.Employee)
+    body: Annotated[dict, Body(example={"content": "yaml_string"})],
+    claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "list_datacontracts"
 
@@ -385,7 +386,7 @@ async def handle_generate_ruleset(
     #     handler_name, create_lambda_event(params={"team_id": team_id}), {}
     # )
 
-    response = await generate_ruleset.handler(
+    response = generate_ruleset.handler(
         create_lambda_event(
             data=body, request_context=add_claims_to_request_ctx({}, claims)
         ),

@@ -38,7 +38,7 @@ def upload_ruleset(params):
     claims = meta.get("claims", {})
     content = body.get("content", "")
     name = body.get("name", "")
-    version = body.get("version", "")
+    version = body.get("version", "1.0.0")
 
     check_empty_or_throw_error(
         content,
@@ -49,11 +49,6 @@ def upload_ruleset(params):
         name,
         "name",
         "Name of rulest is required to upload ruleset",
-    )
-    check_empty_or_throw_error(
-        version,
-        "version",
-        "Version of rulest is required to upload ruleset",
     )
 
     teams = claims.get("cognito:groups", [])
@@ -85,8 +80,6 @@ def upload_ruleset(params):
             "team": ruleset_meta.get("team"),
         },
     )
-
-    print("File is saved at:", url)
 
     # Save metadata
     add_item(table_name=RULESET_MAPPING_DYNAMODB_TABLE_NAME, data=ruleset_meta)

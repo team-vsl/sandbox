@@ -27,7 +27,7 @@ async def handler(event, context):
             {"body": body, "meta": {"claims": claims}}
         )
 
-        print("Generate Response:", response)
+        print("Data Contract Generate Response:", response)
 
         # Return response
         rb.set_status_code(200)

@@ -13,7 +13,7 @@ from utils.response_builder import ResponseBuilder
 from services.ruleset import generate_ruleset
 
 
-async def handler(event, context):
+def handler(event, context):
     rb = ResponseBuilder()
     logger = get_logger()
 
@@ -24,6 +24,8 @@ async def handler(event, context):
         body = request_helpers.get_body_from_event(event)
 
         response = generate_ruleset({"body": body})
+
+        print("Ruleset Generation Response:", response)
 
         # Return response
         rb.set_status_code(200)
