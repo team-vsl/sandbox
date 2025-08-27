@@ -115,6 +115,7 @@ def check_agent(agent_name):
     elif agent_name == "root":
         from genai.contract_agent import DataContractAgent
         agent = DataContractAgent(llm_instance=llm, data_contract=sample_data_contract)
+        agent = DataContractAgent(llm_instance=llm)
 
     elif agent_name == "server":
         from genai.sub_agent.server import ServerAgent

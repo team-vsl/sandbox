@@ -68,3 +68,37 @@ Rules:
 - Output must be pure JSON only—no markdown, no comments, no formatting, no explanation.
 - If input contains no definitions, output: {"models": {}}
 
+Examples:
+{
+    "models":{
+        "orders":{
+            "description": "One record per order. Includes cancelled and deleted orders.",
+            "type": "table",
+            "fields": {
+                "order_id":{
+                    "required": true,
+                    "unique": true,
+                },
+                "order_timestamp": {
+                    "description": "The business timestamp in UTC when the order was successfully registered in the source system and the payment was successful.",
+                    "type": "timestamp",
+                    "required": false,
+                    "quality": [{
+                        "type": "description",
+                        "description": "Must be timestamp"
+                    }]
+                },
+                "order_total": {
+                    "description": "Total amount the smallest monetary unit (e.g., cents).",
+                    "type": "int",
+                    "quality": [{
+                        "type": "sql",
+                        "description": "95% of all order total values are expected to be between 10 and 499 EUR.",
+                        "query": "SELECT quantile_cont(order_total, 0.95) AS percentile_95 FROM orders",
+                        "mustBeBetween": [1000, 499000]
+                    }]
+                }
+            }
+        }
+    }
+}
