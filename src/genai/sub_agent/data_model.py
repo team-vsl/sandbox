@@ -76,7 +76,7 @@ class DataModelAgent(BaseSubAgent):
                 data = super().normalize_and_validate(DataContractModels, payload)
 
                 if data:
-                    state["data"] = data
+                    state["data"] = data.data_models
                 return state
             except Exception as e:
                 print(e)

@@ -57,7 +57,7 @@ class DataContractAgent:
     def _init_worker_agents(self):
         return {
             "metainfo": sub_agent.InfoAgent(self._llm),
-            "data_model": sub_agent.DataModelAgent(self._llm),
+            "data_models": sub_agent.DataModelAgent(self._llm),
             "server": sub_agent.ServerAgent(self._llm),
             "servicelevels": sub_agent.ServiceLevelsAgent(self._llm),
             "terms": sub_agent.TermsAgent(self._llm),
@@ -126,7 +126,7 @@ class DataContractAgent:
         user_inputs = [msg for msg in messages if isinstance(msg, HumanMessage)][-1:]
         if not user_inputs:
             return state
-        worker_agent_posible = ["data_model", "metainfo", "server", "servicelevels", "terms"]
+        worker_agent_posible = ["data_models", "metainfo", "server", "servicelevels", "terms"]
         response = self.choose_worker_fn(user_inputs)
         parser = CommaSeparatedListOutputParser()
         try:
@@ -168,13 +168,13 @@ class DataContractAgent:
             agent_response = agent.invoke(user_input).get("data")
             logging.info(f"Agent {agent_name} result: {agent_response} / data type: {type(agent_response)}")
             results[agent_name] = self._flatten_output_data(agent_response)
-
+        # TODO: sync data_model -> data_models (system_prompt, data type,...)
         dc_kwargs = {
             'id': 'auto-generated-id',
             'metainfo': results.get('metainfo') or current_data_contract.get('metainfo'),
             'server': results.get('server') or current_data_contract.get('server'),
             'terms': results.get('terms') or current_data_contract.get('terms'),
-            'data_models': results.get('data_model') or current_data_contract.get('data_model'),
+            'data_models': results.get('data_models') or current_data_contract.get('data_models'),
             'servicelevels': results.get('servicelevels') or current_data_contract.get('servicelevels')
         }
         try:
