@@ -4,7 +4,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 def quality_to_DQDL(quality_data_session, llm_instance):
 
     system_prompt = """
-You are a converter that transforms session-defined data quality checks into AWS Glue Data Quality Definition Language (DQDL) format.
+You are a converter that transforms session-defined data model into AWS Glue Data Quality Definition Language (DQDL) format.
 
 Given a JSON object containing data quality checks in the form:
 - Each check includes:

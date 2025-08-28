@@ -11,7 +11,7 @@ class DataContract(BaseModel):
     servers: Optional[DataServer] = Field(
         None, description="Map of named server entries"
     )
-    models: Optional[DataContractModels] = Field(
+    data_models: Optional[DataContractModels] = Field(
         None, description="Logical data models defined in this contract"
     )
     terms: Optional[Terms] = Field(None, description="Terms of data usage, limitations, billing")
