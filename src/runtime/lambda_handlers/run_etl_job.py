@@ -22,7 +22,7 @@ def handler(event, context):
         path_params = request_helpers.get_path_params_from_event(event)
         body = request_helpers.get_body_from_event(event)
 
-        response = run_etl_job({"path_params": path_params.get("job_name")})
+        response = run_etl_job({"path_params": path_params})
 
         # Return response
         rb.set_status_code(200)

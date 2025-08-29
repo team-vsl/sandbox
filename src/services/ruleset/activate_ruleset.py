@@ -118,6 +118,8 @@ async def activate_ruleset(params):
     await asyncio.gather(*move_file_tasks)
     responses = await asyncio.gather(*update_item_tasks)
 
+    print("DEST:", dest_object_key)
+
     get_file_response = get_file(
         bucket_name=RULESET_BUCKET_NAME, object_key=dest_object_key
     )
