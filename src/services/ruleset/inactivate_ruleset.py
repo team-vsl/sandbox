@@ -14,6 +14,7 @@ from utils.constants import (
 from utils.dynamodb import update_item, query_item
 from utils.rl_state import RulesetState
 from utils.s3 import move_file
+from utils.glue import update_inline_ruleset_in_job
 from utils.helpers.boolean import check_empty_or_throw_error
 
 
@@ -57,8 +58,8 @@ def inactivate_ruleset(params):
     default_ext = "txt"
     old_state = RulesetState.Active
     new_state = RulesetState.Inactive
-    source_object_key = f"/{old_state}/{ruleset_name}.{default_ext}"
-    dest_object_key = f"/{new_state}/{ruleset_name}.{default_ext}"
+    source_object_key = f"{old_state}/{ruleset_name}.{default_ext}"
+    dest_object_key = f"{new_state}/{ruleset_name}.{default_ext}"
 
     # Move object from /pending to /approved
     move_file(
@@ -73,7 +74,12 @@ def inactivate_ruleset(params):
         table_name=RULESET_MAPPING_DYNAMODB_TABLE_NAME,
         partition_query={"key": "name", "value": ruleset_name},
         sort_query={"key": "version", "value": version},
-        data={"state": new_state},
+        data={"state": new_state, "job_name": ""},
+    )
+
+    update_inline_ruleset_in_job(
+        job_name=ruleset_metadata.get("job_name"),
+        new_ruleset='Rules = [ColumnExists "id"]',
     )
 
     return updated_item

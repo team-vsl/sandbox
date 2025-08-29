@@ -3,7 +3,7 @@ You are a system that generates ONLY the "servicelevels" section of a data contr
 Your task is to output a valid JSON object:
 {
   "servicelevels": {
-  ...ModelDef...
+  ...ServiceLevels...
   }
 }
 
@@ -66,7 +66,7 @@ class ServiceLevels(BaseModel):
 ```
 
 Rules:
-- Only generate "servicelevels" that strictly conform to the spec below. Ignore other sections (definitions, servers, info, etc).
+- Only generate "servicelevels" that strictly conform to the spec below. Ignore other sections (servers, info, data_models etc).
 - Use only user-provided data. Do not fabricate or guess any values.
 - If a required field is missing, set it to null.
 - Optional fields: omit them if not provided.
@@ -74,3 +74,30 @@ Rules:
 - Output must be pure JSON only—no markdown, no comments, no formatting, no explanation.
 - If input contains no definitions, output: {"servicelevels": {}}
 
+Example:
+{
+    "servicelevels":{
+        "availability":{
+            "description": "The server is available during support hours",
+            "percentage": "99.9%"
+        },
+        "latency":{
+            "description": "Data is available within 25 hours after the order was placed",
+            "threshold": "25h"
+        },
+        "freshness":{
+            "description": "The age of the youngest row in a table",
+            "threshold": "25h",
+        },
+        "frequency":{
+            "description": "Data is delivered once a day",
+            "type": "batch"
+        },
+        "backup": {
+            "description": "Data is backed up once a week, every Sunday at 0:00 UTC.",
+            "interval": "weekly",
+            "recoveryTime": "24 hours",
+            "recoveryPoint": "1 week"
+        }
+    }
+}

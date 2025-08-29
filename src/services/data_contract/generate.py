@@ -1,5 +1,7 @@
 import logging
 
+import yaml
+
 # Import from utils
 from utils.aws_clients import get_bedrock_client
 from langchain_aws import ChatBedrock
@@ -28,4 +30,10 @@ def generate_draft_datacontract(params):
     graph_agent = DataContractAgent(llm_instance=llm)
     response = graph_agent.invoke(user_input)
 
-    return response
+    messages = response.get("messages")
+    data_contract_content = response.get("data_contract")
+
+    return {
+        "aiResponse": messages[-1].content,
+        "dataContractContent": yaml.dump(data_contract_content, allow_unicode=True),
+    }

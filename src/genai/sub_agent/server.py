@@ -29,22 +29,25 @@ class ServerAgent(BaseSubAgent):
 
     def _create_default_model(self) -> DataServer:
         """Create a default DataServer object with empty values."""
-        return DataServer(
-            servers=None,
-            definitions=None,
-            environment="dev",
-            roles=None,
-        )
+        return DataServer(server={
+            "default_s3_servers": {
+                "type": "s3",
+                "definitions": None,
+                "environment": "dev",
+                "roles": None
+            }
+        })
         
     def detect_type(self, user_input: List[HumanMessage]) -> str:
         classification_prompt = self._system_prompt["server_classifier_instruction"]
-        input_text = [request for request in user_input if isinstance(request, HumanMessage)]
         if not classification_prompt:
             raise ValueError("Classification prompt not found")
         
         message = [
             SystemMessage(content=classification_prompt)
-        ] + input_text
+        ] + user_input
+        print("\n", message, "\n")
+
         response = self._llm.invoke(message)
         time.sleep(30)
 
@@ -57,6 +60,11 @@ class ServerAgent(BaseSubAgent):
         response = self.detect_type(input_text)
 
         parser = CommaSeparatedListOutputParser()
+        print("\n" + response.content + "\n")
+        if len(response.content.split()) > 4:
+            state['server_type'] = []
+            return state
+
         detected_type = parser.parse(response.content)
 
         for item in detected_type:
@@ -68,6 +76,10 @@ class ServerAgent(BaseSubAgent):
         return state
 
     def generate_object_node(self, state: ServerAgentState) -> ServerAgentState:
+        if not state['server_type']:
+            state['data'] = self._create_default_model()
+            return state
+
         object_dict = {"redshift": RedshiftServer, "s3": S3Server}
         sys_prompt_list = self._system_prompt
         server_types = state.get("server_type")
@@ -83,37 +95,29 @@ class ServerAgent(BaseSubAgent):
             messages = [SystemMessage(content=sys_prompt)] + human_requests
             parser = JsonOutputParser(pydantic_object=object_dict[server_type])
             max_retries = 3
+
+            #TODO: The is bug with s3_server, which return all field not only the server fields.
+
             for attempt in range(max_retries):
                 response = self._llm.invoke(messages)
                 time.sleep(30)
                 try:
-                    draw_data = parser.parse(response.content).get("servers", {})
-                    # the is a bug model create full of data contract, not the part we need.
-                    data = self.post_processing_data(draw_data=draw_data, except_data_model_class=object_dict[server_type])
+                    draw_data = parser.parse(response.content).get("server", {})
+
+                    print("draw_data:\n", draw_data,"\n")
+
+                    #TODO: Fast way to demo, need better validate in future (except_data_model_class=DataServer)
+                    data = super().normalize_and_validate(DataServer, {"server": draw_data})
                     if data:
                         all_servers[server_type] = data
                         break
-                except Exception:
+                except Exception as e:
+                    print(e)
                     if attempt == max_retries - 1:
                         state['data'] = self._create_default_model()
                         return state
         state["data"] = all_servers
         return state
-
-    def post_processing_data(self, draw_data: Dict[str, Any], except_data_model_class):
-        object_fields = set(except_data_model_class.model_fields.keys())
-
-        filtered_data = {}
-
-        for field_name in object_fields:
-            if field_name in draw_data:
-                filtered_data[field_name] = draw_data[field_name]
-
-        try:
-            return except_data_model_class(**filtered_data)
-        except Exception as e:
-            print(f"Error: {e}")
-            return None
 
     @staticmethod
     def should_continue(state: ServerAgentState):

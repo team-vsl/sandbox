@@ -27,4 +27,12 @@ def generate_ruleset(params):
     llm = ChatBedrock(client=bedrock_client, model_id=model_id)
     response = quality_to_DQDL(user_input, llm)
 
-    return response
+    return response.content
+
+    messages = response.get("messages")
+    data_contract_content = response.get("data_contract")
+
+    return {
+        "aiResponse": messages[-1].content,
+        "dataContractContent": yaml.dump(data_contract_content),
+    }

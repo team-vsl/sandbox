@@ -2,6 +2,7 @@
 import os
 import io
 import sys
+import time
 from datetime import datetime, timezone
 
 # Import 3rd-party libraries
@@ -47,13 +48,13 @@ def upload_datacontract(params):
 
     content_data = yaml.safe_load(content)
 
-    name = content_data.get("name")
-    version = content_data.get("version")
+    name = content_data.get("title", f"Untitled Data Contract - {time.time() * 1000}")
+    version = content_data.get("version", "1.0.0")
 
-    info = content_data.get("info")
+    info = content_data.get("metainfo")
     if isinstance(info, dict):
-        name = info.get("name")
-        version = info.get("version")
+        name = info.get("title", name)
+        version = info.get("version", version)
 
     teams = claims.get("cognito:groups", [])
 
@@ -78,7 +79,7 @@ def upload_datacontract(params):
     )
     bytes = io.BytesIO(content.encode("utf-8"))
     url = upload_fileobj(
-        bytes=bytes,
+        fileobj=bytes,
         bucket_name=DATACONTRACT_BUCKET_NAME,
         object_name=object_key,
         metadata={

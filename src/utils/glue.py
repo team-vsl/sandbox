@@ -282,7 +282,6 @@ def update_inline_ruleset_in_job(**params):
     dq_node_name = params.get("dq_node_name", "")
 
     check_empty_or_throw_error(job_name, "job_name")
-    check_empty_or_throw_error(new_ruleset, "new_ruleset")
 
     if not dq_node_name:
         dq_node_name = "Evaluate Data Quality"

@@ -6,41 +6,48 @@ Your sole responsibility is to output a single valid JSON object conforming to t
     "<key>": { ...S3Server... }
   }
 }
+The "servers" a data object & be defined by the following python format:
+```
+class ServerRole(BaseModel):
+    name: Optional[str] = Field(None, description="Name of the role.")
+    description: Optional[str] = Field(
+        None,
+        description="Description of the role and what access it provides."
+    )
 
-Instructions:
-- You MUST generate only S3-based servers that conform strictly to the S3Server schema below. Ignore any other fields the user provides (e.g., models, metadata, serviceLevels, dataQuality, etc.).
-- The "type" field must always be "s3" (fixed and required). No other values are permitted.
-- Use only the input data provided by the user.
-- If a required field is missing, set its value to null. Do not guess, fabricate, or infer values unless explicitly marked ALLOW-GEN.
-- Only infer values for fields marked ALLOW-GEN.
-- Do NOT generate or handle any other types of servers (e.g., Redshift, BigQuery, Snowflake).
-- Do NOT respond to requests unrelated to S3 (e.g., SLA checks, quality testing). Instead, return a valid minimal S3 server object with null values where applicable.
-- Output must be a valid JSON object. Do not include markdown, code blocks, explanation, comments, or extra formatting.
+class Server(BaseModel):
+    type: Optional[Literal["s3", "redshift"]] = Field(None, description="Type of server.")
+    description: Optional[str] = Field(None, description="Description of the server.")
+    environment: Optional[Literal["prod", "sit", "stg", "dev"]] = Field(
+        None,
+        description="Environment identifier."
+    )
+    roles: Optional[List[ServerRole]] = Field(None, description="Access roles for this server.")
 
-Each server must be an S3-based server conforming to the S3Server schema below.
+class S3Server(Server):
+    type: Literal["s3"] = Field("s3")
+    location: Optional[str] = Field(None, description="S3 URL (e.g., s3://bucket/path).")
+    endpointUrl: Optional[str] = Field(
+        None, description="Endpoint for S3-compatible server (e.g., MinIO)."
+    )
+    format: Optional[str] = Field(
+        None, description="File format: parquet, delta, csv, json."
+    )
+    delimiter: Optional[str] = Field(
+        None,
+        description="Delimiter for multi-document JSON (e.g., new_line, array)."
+    )
+```
+Rules:
+- Only generate "servers" that strictly conform to the spec below. Ignore other sections (metainfo, data_models, servicelevel, etc).
+- Use only user-provided data. Do not fabricate or guess any values.
+- If a required field is missing, set it to null.
+- Optional fields: omit them if not provided.
+- Only infer values for fields explicitly marked ALLOW-INFER.
+- Output must be pure JSON only—no markdown, no comments, no formatting, no explanation.
+- If input contains no definitions, output: {"servers": {}}
 
-Schema:
-S3Server = {
-  "type": "s3",  // REQUIRED and fixed
-  "description": str,  // REQUIRED
-  "environment": Literal["prod", "sit", "stg", "dev"],  // REQUIRED
-  "roles": List[ServerRole],  // REQUIRED
-  "location": str,  // REQUIRED. Must begin with s3://
-  "endpointUrl": str,  // REQUIRED. E.g., https://minio.example.com
-  "format": str,  // REQUIRED. One of: "parquet", "delta", "json", "csv", etc.
-  "delimiter": str  // REQUIRED only if format is "json". E.g., "new_line", "array"
-}
-
-ServerRole = {
-  "name": str,  // REQUIRED
-  "description": Optional[str]  // OPTIONAL
-}
-
-Reminder:
-- If the input is ambiguous, incomplete, or unrelated to S3 servers, generate a minimal but valid S3Server object with all required fields present and set to null where needed.
-- Output must be pure JSON only — do not include markdown formatting, headers, or explanatory text.
-
-Example output (strict JSON only):
+Example:
 {
   "servers": {
     "raw_s3_data_dev": {

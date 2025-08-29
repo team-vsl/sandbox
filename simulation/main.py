@@ -161,7 +161,7 @@ async def handle_sign_in(
     tags=["Auth"],
 )
 async def handle_refresh_token(
-    body: Annotated[dict, Body(example={"refreshTokens": "string"})],
+    body: Annotated[dict, Body(example={"refreshToken": "string"})],
 ):
     # handler_name = "get_ruleset"
 
@@ -315,7 +315,7 @@ async def handle_get_datacontract(
 )
 async def handle_approve_datacontract(
     datacontract_name: str,
-    body: dict,
+    body: Annotated[dict, Body(example={"version": "string"})],
     claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "get_datacontract"
@@ -329,6 +329,7 @@ async def handle_approve_datacontract(
     response = await approve_draft_datacontract.handler(
         create_lambda_event(
             params={"datacontract_name": datacontract_name},
+            data=body,
             request_context=add_claims_to_request_ctx({}, claims),
         ),
         {},
@@ -346,7 +347,7 @@ async def handle_approve_datacontract(
 )
 async def handle_reject_datacontract(
     datacontract_name: str,
-    body: dict,
+    body: Annotated[dict, Body(example={"version": "string"})],
     claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "get_datacontract"
@@ -360,6 +361,7 @@ async def handle_reject_datacontract(
     response = await reject_draft_datacontract.handler(
         create_lambda_event(
             params={"datacontract_name": datacontract_name},
+            data=body,
             request_context=add_claims_to_request_ctx({}, claims),
         ),
         {},
@@ -375,7 +377,8 @@ async def handle_reject_datacontract(
     tags=["Ruleset"],
 )
 async def handle_generate_ruleset(
-    body: dict, claims: dict = authorization_dependency(Roles.Employee)
+    body: Annotated[dict, Body(example={"content": "yaml_string"})],
+    claims: dict = authorization_dependency(Roles.Employee),
 ):
     # handler_name = "list_datacontracts"
 
@@ -383,7 +386,7 @@ async def handle_generate_ruleset(
     #     handler_name, create_lambda_event(params={"team_id": team_id}), {}
     # )
 
-    response = await generate_ruleset.handler(
+    response = generate_ruleset.handler(
         create_lambda_event(
             data=body, request_context=add_claims_to_request_ctx({}, claims)
         ),

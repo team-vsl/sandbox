@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List
 from langgraph.graph import StateGraph, END
 from langchain_core.output_parsers import JsonOutputParser
 from typing import TypedDict, Annotated
@@ -55,62 +55,35 @@ class DataModelAgent(BaseSubAgent):
         messages = [SystemMessage(content=sys_prompt)] + human_requests
         parser = JsonOutputParser(pydantic_object=DataContractModels)
         max_retries = 3
+
         for attempt in range(max_retries):
             response = self._llm.invoke(messages)
             time.sleep(30)
             try:
-                draw_data = parser.parse(response.content).get("models", {})
-                if draw_data:
-                    data = self.post_processing_data(draw_data=draw_data)
-                    state["data"] = data
+                parsed = parser.parse(response.content)
+
+                if isinstance(parsed, dict) and "data_models" in parsed:
+                    payload = parsed
+                elif isinstance(parsed, dict) and "models" in parsed:
+                    payload = {"data_models": parsed.get("models", {})}
+                elif isinstance(parsed, dict):
+                    payload = {"data_models": parsed}
+                else:
+                    payload = {"data_models": {}}
+
+                logging.info(payload.get("data_models"))
+                logging.info(type(payload.get("data_models")))
+                data = super().normalize_and_validate(DataContractModels, payload)
+
+                if data:
+                    state["data"] = data.data_models
                 return state
-            except Exception:
-                if attempt == max_retries - 1:
-                    data = {}
-                    return state
-        return state
-
-    @staticmethod
-    def post_processing_data(draw_data: Dict[str, Any]):
-        model_def_object_fields = set(ModelDef.model_fields.keys())
-        field_def_object_fields = set(FieldDef.model_fields.keys())
-
-        all_data = {}
-
-        for key, item in draw_data.items():
-            filtered_data = {}
-
-            for field_name in model_def_object_fields:
-                if field_name in item:
-                    if not field_name == "fields":
-                        filtered_data[field_name] = item[field_name]
-            if not isinstance(item['fields'], dict):    
-                for sub_key, sub_item in item['fields']:
-                    sub_filtered_data = {}
-
-                    for sub_field_name in field_def_object_fields:
-                        if sub_field_name in sub_item:
-                            sub_filtered_data[sub_field_name] = sub_item[sub_field_name]
-
-                    try:
-                        sub_processed_data = {sub_key: FieldDef(**sub_filtered_data)}
-                    except:
-                        print(f'Error: {e}')
-                        sub_processed_data = {sub_key: None}
-                    filtered_data['fields'].update(sub_processed_data)
-            else:
-                filtered_data['fields'] = {"sample_data_fields": FieldDef(type="text", description="sample data")}
-            
-            try:
-                processed_data = {key: ModelDef(**filtered_data)}
             except Exception as e:
-                print(f'Error: {e}')
-                processed_data = {key: None}
-
-            all_data.update(processed_data)
-
-        return DataContractModels(data_models=all_data)
-
+                print(e)
+                if attempt == max_retries - 1:
+                    break
+        state["data"] = self._create_default_model()
+        return state
 
     def _create_graph(self):
         graph_builder = StateGraph(DataModelAgentState)
