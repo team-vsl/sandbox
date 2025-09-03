@@ -5,7 +5,13 @@ Source code for Challenge 23 solution.
 
 ## Collaborators
 
-To be updated later...
+We are a collective of youthful souls, driven by passion and creativity, united with purpose. We're:
+
+1. Pham Minh Chien - Team Leader (from TechX)
+2. Le Huynh Nghiem - AI/Data Engineer
+3. Tran Duc Anh - Data Engineer
+4. Nguyen Anh Tuan - Fullstack Developer
+5. Thai Anh Duc - Cloud Engineer
 
 ## Requirements
 
@@ -72,6 +78,13 @@ python3 -m venv venv
 pip install -r requirements.txt
 ```
 
-5. Done.
+5. Start the simulation server.
+
+```bash
+cd simulation
+python main.py
+```
+
+6. Done.
 
 ---
